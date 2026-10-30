@@ -26,7 +26,7 @@ class CommunityController extends Controller
         $user = $request->user();
 
         return Inertia::render('admin/people/communities/Index', [
-            'communities' => Community::query()->with('leader')->withCount(['members', 'families'])->orderBy('name')->get()
+            'communities' => Community::query()->with('leader.media')->withCount(['members', 'families'])->orderBy('name')->get()
                 ->map(fn (Community $community): array => [
                     'id' => $community->id,
                     'name' => $community->name,

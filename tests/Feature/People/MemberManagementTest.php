@@ -75,22 +75,32 @@ test('names are tidied and the family role is dropped without a family', functio
 });
 
 test('a photo can be uploaded, replaced and removed', function () {
-    Storage::fake('public');
+    Storage::fake('media');
     $member = Member::factory()->create();
     $editor = User::factory()->withPermissions(Permission::MembersUpdate)->create();
     $fields = ['first_name' => $member->first_name, 'last_name' => $member->last_name, 'gender' => $member->gender->value, 'status' => 'active'];
 
-    $this->actingAs($editor)->put(route('admin.members.update', $member), [...$fields, 'photo' => UploadedFile::fake()->image('one.jpg')]);
-    $first = $member->refresh()->photo_path;
-    Storage::disk('public')->assertExists($first);
+    $this->actingAs($editor)->put(route('admin.members.update', $member), [...$fields, 'photo' => UploadedFile::fake()->image('one.jpg', 600, 400)]);
+    $first = $member->refresh()->getFirstMedia('photo');
+
+    expect($first)->not->toBeNull()
+        ->and($first->hasGeneratedConversion('thumb'))->toBeTrue()
+        ->and($first->disk)->toBe('media')
+        ->and($member->photoUrl())->toBe($first->getUrl('thumb'));
+    Storage::disk('media')->assertExists($first->getPathRelativeToRoot());
 
     $this->actingAs($editor)->put(route('admin.members.update', $member), [...$fields, 'photo' => UploadedFile::fake()->image('two.png')]);
-    Storage::disk('public')->assertMissing($first);
-    Storage::disk('public')->assertExists($member->refresh()->photo_path);
+    $second = $member->refresh()->getFirstMedia('photo');
+
+    expect($member->getMedia('photo'))->toHaveCount(1)
+        ->and($second->is($first))->toBeFalse();
+    Storage::disk('media')->assertMissing($first->getPathRelativeToRoot());
 
     $this->actingAs($editor)->put(route('admin.members.update', $member), [...$fields, 'remove_photo' => true]);
 
-    expect($member->refresh()->photo_path)->toBeNull();
+    expect($member->refresh()->getMedia('photo'))->toHaveCount(0)
+        ->and($member->photoUrl())->toBeNull();
+    Storage::disk('media')->assertMissing($second->getPathRelativeToRoot());
 });
 
 test('a photo must be an image', function () {
@@ -120,8 +130,8 @@ test('removing a member keeps the record but closes their portal', function () {
 
 test('the register can be searched across name columns and filtered', function () {
     $community = Community::factory()->create();
-    Member::factory()->create(['first_name' => 'Grace', 'last_name' => 'Okafor', 'community_id' => $community->id]);
-    Member::factory()->create(['first_name' => 'Grace', 'last_name' => 'Musa']);
+    Member::factory()->create(['first_name' => 'Grace', 'last_name' => 'Okafor', 'community_id' => $community->id, 'date_of_birth' => now()->subYears(40)]);
+    Member::factory()->create(['first_name' => 'Grace', 'last_name' => 'Musa', 'date_of_birth' => now()->subYears(30)]);
     Member::factory()->create(['first_name' => 'Ada', 'last_name' => 'Okafor', 'date_of_birth' => now()->subYears(8)]);
     $viewer = User::factory()->withPermissions(Permission::MembersView)->create();
 
@@ -199,7 +209,7 @@ test('member pickers can be used by anyone who needs to choose a member', functi
 ]);
 
 test('the member lookup matches every word and returns at most ten people', function () {
-    Member::factory()->count(12)->create(['last_name' => 'Okafor']);
+    Member::factory()->count(12)->create(['first_name' => 'Chinedu', 'last_name' => 'Okafor', 'email' => null]);
     Member::factory()->create(['first_name' => 'Grace', 'last_name' => 'Okafor']);
     $viewer = User::factory()->withPermissions(Permission::MembersView)->create();
 

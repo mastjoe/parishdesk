@@ -31,7 +31,7 @@ class MemberTable
      */
     public static function for(Request $request): TableQuery
     {
-        return TableQuery::for(Member::query()->with(['community:id,name', 'family:id,name']), $request)
+        return TableQuery::for(Member::query()->with(['community:id,name', 'family:id,name', 'media']), $request)
             ->searchable(['first_name', 'middle_name', 'last_name', 'baptismal_name', 'member_no', 'email', 'phone'])
             ->sortable(['last_name', 'member_no', 'date_of_birth', 'joined_at', 'created_at'], 'last_name')
             ->filter('status', function (Builder $query, string $status): void {

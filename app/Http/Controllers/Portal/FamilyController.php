@@ -24,7 +24,7 @@ class FamilyController extends Controller
                 'name' => $family->name,
                 'address' => $family->address,
                 'community' => $family->community?->name,
-                'members' => $family->members()->orderBy('date_of_birth')->get()
+                'members' => $family->members()->with('media')->orderBy('date_of_birth')->get()
                     ->map(fn (Member $relative): array => [
                         ...MemberPresenter::summary($relative),
                         'isMe' => $relative->is($member),

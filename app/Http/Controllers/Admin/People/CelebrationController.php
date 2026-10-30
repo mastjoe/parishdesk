@@ -45,6 +45,7 @@ class CelebrationController extends Controller
         $today = today();
 
         return array_values(Member::query()
+            ->with('media')
             ->whereNotIn('status', [MemberStatus::Deceased, MemberStatus::TransferredOut])
             ->celebrating($column, $today, $days)
             ->limit($limit)

@@ -89,6 +89,7 @@ class MemberController extends Controller
         $member->load(['community:id,name', 'family.community:id,name', 'user:id,email,last_login_at', 'latestInvitation']);
 
         $relatives = $member->family?->members()
+            ->with('media')
             ->whereKeyNot($member->id)
             ->orderByRaw("case family_role when 'head' then 0 when 'spouse' then 1 when 'child' then 2 else 3 end")
             ->orderBy('date_of_birth')

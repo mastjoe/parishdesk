@@ -30,7 +30,6 @@ return new class extends Migration
             $table->string('occupation', 100)->nullable();
             $table->string('state_of_origin', 100)->nullable();
             $table->string('lga_of_origin', 100)->nullable();
-            $table->string('photo_path')->nullable();
             $table->foreignId('community_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('family_id')->nullable()->constrained()->nullOnDelete();
             $table->string('family_role', 20)->nullable();

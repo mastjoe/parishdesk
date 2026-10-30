@@ -23,7 +23,7 @@ class LookupController extends Controller
     {
         Gate::authorize('lookup', Member::class);
 
-        $members = Member::query()->with('family:id,name')
+        $members = Member::query()->with(['family:id,name', 'media'])
             ->tap(fn (Builder $query) => $this->search($query, $request, ['first_name', 'middle_name', 'last_name', 'member_no', 'phone']))
             ->orderBy('last_name')->orderBy('first_name')
             ->limit(10)

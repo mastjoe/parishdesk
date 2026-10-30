@@ -27,7 +27,7 @@ class ChangeRequestController extends Controller
         $user = $request->user();
 
         $requests = ProfileChangeRequest::query()
-            ->with(['member' => fn ($query) => $query->withTrashed(), 'submitter:id,name', 'reviewer:id,name'])
+            ->with(['member' => fn ($query) => $query->withTrashed()->with('media'), 'submitter:id,name', 'reviewer:id,name'])
             ->where('status', $status)
             ->orderBy($status === ChangeRequestStatus::Pending ? 'created_at' : 'reviewed_at', $status === ChangeRequestStatus::Pending ? 'asc' : 'desc')
             ->paginate(15)

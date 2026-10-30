@@ -81,7 +81,7 @@ class FamilyController extends Controller
                 'notes' => $family->notes,
                 'createdAt' => $family->created_at?->toIso8601String(),
             ],
-            'members' => $family->members()->orderBy('date_of_birth')->get()
+            'members' => $family->members()->with('media')->orderBy('date_of_birth')->get()
                 ->map(fn (Member $member): array => [
                     ...MemberPresenter::summary($member),
                     'phone' => $member->phone,

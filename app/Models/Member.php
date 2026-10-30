@@ -18,9 +18,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * A parishioner in the parish register.
@@ -43,7 +46,6 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $occupation
  * @property string|null $state_of_origin
  * @property string|null $lga_of_origin
- * @property string|null $photo_path
  * @property int|null $community_id
  * @property int|null $family_id
  * @property FamilyRole|null $family_role
@@ -59,12 +61,12 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'member_no', 'title', 'first_name', 'middle_name', 'last_name', 'baptismal_name', 'gender', 'date_of_birth',
     'marital_status', 'wedding_date', 'phone', 'alt_phone', 'email', 'address', 'occupation', 'state_of_origin',
-    'lga_of_origin', 'photo_path', 'community_id', 'family_id', 'family_role', 'status', 'joined_at', 'notes',
+    'lga_of_origin', 'community_id', 'family_id', 'family_role', 'status', 'joined_at', 'notes',
 ])]
-class Member extends Model
+class Member extends Model implements HasMedia
 {
     /** @use HasFactory<MemberFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
 
     /**
      * The numbering sequence that hands out member numbers.
@@ -164,11 +166,32 @@ class Member extends Model
     }
 
     /**
-     * Get the public URL of the member's photo.
+     * Register the member's media: one photo at a time.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('photo')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    /**
+     * Register the square thumbnail shown in avatars across the app.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->performOnCollections('photo')
+            ->nonQueued()
+            ->fit(Fit::Crop, 256, 256);
+    }
+
+    /**
+     * Get the URL of the member's photo thumbnail.
      */
     public function photoUrl(): ?string
     {
-        return $this->photo_path !== null ? Storage::disk('public')->url($this->photo_path) : null;
+        return $this->getFirstMediaUrl('photo', 'thumb') ?: null;
     }
 
     /**
