@@ -96,14 +96,27 @@ class TableQuery
      */
     public function paginate(int $defaultPerPage = 15): LengthAwarePaginator
     {
+        $perPage = min(max((int) $this->request->integer('per_page', $defaultPerPage), 5), 100);
+
+        return $this->query()->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Apply the search, filters and sort, and return the query, for example
+     * to export every matching row.
+     *
+     * @return Builder<TModel>
+     */
+    public function query(): Builder
+    {
         $search = $this->search();
 
+        // Every word must match one of the columns, so "grace okafor" finds a
+        // member whose first and last names live in different columns.
         if ($search !== '' && $this->searchable !== []) {
-            $this->query->where(function (Builder $query) use ($search): void {
-                foreach ($this->searchable as $column) {
-                    $query->orWhere($column, 'like', '%'.addcslashes($search, '%_\\').'%');
-                }
-            });
+            foreach (preg_split('/\s+/', $search) ?: [] as $term) {
+                $this->query->whereAny($this->searchable, 'like', '%'.addcslashes($term, '%_\\').'%');
+            }
         }
 
         foreach ($this->activeFilters() as $name => $value) {
@@ -113,9 +126,7 @@ class TableQuery
         [$column, $direction] = $this->sort();
         $this->query->orderBy($column, $direction);
 
-        $perPage = min(max((int) $this->request->integer('per_page', $defaultPerPage), 5), 100);
-
-        return $this->query->paginate($perPage)->withQueryString();
+        return $this->query;
     }
 
     /**

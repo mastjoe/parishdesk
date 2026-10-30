@@ -1,14 +1,25 @@
 import {
+    Cake,
+    Church,
+    Cross,
+    FileClock,
     History,
+    House,
+    UsersRound,
     LayoutGrid,
     Palette,
-    Church,
+    Landmark,
     ShieldCheck,
     Users,
     Wallet,
 } from '@lucide/vue';
 import { dashboard } from '@/routes/admin';
 import { index as activityIndex } from '@/routes/admin/activity';
+import { index as changeRequestsIndex } from '@/routes/admin/change-requests';
+import { index as clergyIndex } from '@/routes/admin/clergy';
+import { index as communitiesIndex } from '@/routes/admin/communities';
+import { index as familiesIndex } from '@/routes/admin/families';
+import { celebrations, index as membersIndex } from '@/routes/admin/members';
 import { index as rolesIndex } from '@/routes/admin/roles';
 import { edit as appearanceEdit } from '@/routes/admin/settings/appearance';
 import { edit as financeEdit } from '@/routes/admin/settings/finance';
@@ -24,6 +35,47 @@ export const adminNavigation: NavGroup[] = [
     {
         title: 'Overview',
         items: [{ title: 'Dashboard', href: dashboard(), icon: LayoutGrid }],
+    },
+    {
+        title: 'People',
+        items: [
+            {
+                title: 'Members',
+                href: membersIndex(),
+                icon: UsersRound,
+                permissions: ['members.view'],
+            },
+            {
+                title: 'Families',
+                href: familiesIndex(),
+                icon: House,
+                permissions: ['families.view'],
+            },
+            {
+                title: 'Communities',
+                href: communitiesIndex(),
+                icon: Church,
+                permissions: ['communities.view', 'communities.manage'],
+            },
+            {
+                title: 'Clergy',
+                href: clergyIndex(),
+                icon: Cross,
+                permissions: ['clergy.view', 'clergy.manage'],
+            },
+            {
+                title: 'Celebrations',
+                href: celebrations(),
+                icon: Cake,
+                permissions: ['members.view'],
+            },
+            {
+                title: 'Change requests',
+                href: changeRequestsIndex(),
+                icon: FileClock,
+                permissions: ['members.change-requests.approve'],
+            },
+        ],
     },
     {
         title: 'Access control',
@@ -54,7 +106,7 @@ export const adminNavigation: NavGroup[] = [
             {
                 title: 'Parish profile',
                 href: parishEdit(),
-                icon: Church,
+                icon: Landmark,
                 permissions: ['settings.parish.update'],
             },
             {

@@ -12,6 +12,26 @@ use Illuminate\Support\Str;
  */
 enum Permission: string
 {
+    case MembersView = 'members.view';
+    case MembersCreate = 'members.create';
+    case MembersUpdate = 'members.update';
+    case MembersDelete = 'members.delete';
+    case MembersImport = 'members.import';
+    case MembersExport = 'members.export';
+    case MembersInvite = 'members.invite';
+    case MembersChangeRequestsApprove = 'members.change-requests.approve';
+
+    case FamiliesView = 'families.view';
+    case FamiliesCreate = 'families.create';
+    case FamiliesUpdate = 'families.update';
+    case FamiliesDelete = 'families.delete';
+
+    case CommunitiesView = 'communities.view';
+    case CommunitiesManage = 'communities.manage';
+
+    case ClergyView = 'clergy.view';
+    case ClergyManage = 'clergy.manage';
+
     case UsersView = 'users.view';
     case UsersInvite = 'users.invite';
     case UsersUpdate = 'users.update';
@@ -43,6 +63,22 @@ enum Permission: string
     public function label(): string
     {
         return match ($this) {
+            self::MembersView => 'View members',
+            self::MembersCreate => 'Add members',
+            self::MembersUpdate => 'Edit members',
+            self::MembersDelete => 'Remove members',
+            self::MembersImport => 'Import members',
+            self::MembersExport => 'Export members',
+            self::MembersInvite => 'Invite members to the portal',
+            self::MembersChangeRequestsApprove => 'Review profile change requests',
+            self::FamiliesView => 'View families',
+            self::FamiliesCreate => 'Create families',
+            self::FamiliesUpdate => 'Edit families and their members',
+            self::FamiliesDelete => 'Delete families',
+            self::CommunitiesView => 'View communities',
+            self::CommunitiesManage => 'Create, edit and delete communities',
+            self::ClergyView => 'View clergy history',
+            self::ClergyManage => 'Record clergy assignments',
             self::UsersView => 'View users',
             self::UsersInvite => 'Invite users',
             self::UsersUpdate => 'Edit and deactivate users',
@@ -65,6 +101,22 @@ enum Permission: string
     public function description(): string
     {
         return match ($this) {
+            self::MembersView => 'Browse the member register, profiles and birthdays.',
+            self::MembersCreate => 'Register new parishioners.',
+            self::MembersUpdate => 'Change member details, photos and status.',
+            self::MembersDelete => 'Remove members from the register. Records are kept and can be restored.',
+            self::MembersImport => 'Bring in members from a CSV file.',
+            self::MembersExport => 'Download the member register as a CSV file.',
+            self::MembersInvite => 'Send members a link to set up their portal account.',
+            self::MembersChangeRequestsApprove => 'Approve or reject the profile changes members submit from the portal.',
+            self::FamiliesView => 'Browse families and who belongs to them.',
+            self::FamiliesCreate => 'Create new families.',
+            self::FamiliesUpdate => 'Change family details and add or remove family members.',
+            self::FamiliesDelete => 'Delete families. Their members stay in the register.',
+            self::CommunitiesView => 'See the communities, stations and outstations of the parish.',
+            self::CommunitiesManage => 'Create, rename and delete communities and choose their leaders.',
+            self::ClergyView => 'See the priests and deacons who have served the parish.',
+            self::ClergyManage => 'Add, edit and remove clergy assignments.',
             self::UsersView => 'See the list of staff users and their access.',
             self::UsersInvite => 'Send, resend and revoke staff invitations.',
             self::UsersUpdate => 'Change user details and activate or deactivate accounts.',
@@ -88,7 +140,7 @@ enum Permission: string
      */
     public static function catalogue(): array
     {
-        return array_map(fn (PermissionGroup $group): array => [
+        return array_values(array_map(fn (PermissionGroup $group): array => [
             'key' => $group->value,
             'label' => $group->label(),
             'description' => $group->description(),
@@ -100,7 +152,7 @@ enum Permission: string
                 ],
                 array_values(array_filter(self::cases(), fn (self $permission): bool => $permission->group() === $group)),
             ),
-        ], PermissionGroup::cases());
+        ], PermissionGroup::cases()));
     }
 
     /**

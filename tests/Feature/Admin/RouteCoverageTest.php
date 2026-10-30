@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\ClergyAssignment;
+use App\Models\Community;
+use App\Models\Family;
+use App\Models\Member;
+use App\Models\ProfileChangeRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
@@ -21,7 +26,13 @@ test('every admin route requires its own permission', function () {
         'role' => Role::create(['name' => 'Choir Coordinator'])->id,
         'user' => User::factory()->create()->id,
         'invitation' => UserInvitation::factory()->create()->id,
+        'member' => $member = Member::factory()->inFamily($family = Family::factory()->create())->create(),
+        'family' => $family->id,
+        'community' => Community::factory()->create()->id,
+        'clergy' => ClergyAssignment::factory()->create()->id,
+        'changeRequest' => ProfileChangeRequest::factory()->for($member)->create()->id,
     ];
+    $parameters['member'] = $member->id;
 
     $routes = collect(Route::getRoutes()->getRoutes())
         ->filter(fn (RouteDefinition $route) => str_starts_with((string) $route->getName(), 'admin.'))

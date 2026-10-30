@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user instanceof User ? $user->effectivePermissionNames() : [],
                 'isSuperAdmin' => $user instanceof User && $user->isSuperAdmin(),
                 'canAccessAdmin' => $user instanceof User && $user->canAccessAdmin(),
+                'hasMember' => $user instanceof User && $user->member !== null,
             ],
             'parish' => [
                 'name' => $parish->name,

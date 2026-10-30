@@ -60,7 +60,7 @@ class UserController extends Controller
             'catalogue' => Permission::catalogue(),
             'grantable' => $actor->effectivePermissionNames(),
             'invitations' => $actor->can('invite', User::class)
-                ? UserInvitation::query()->with('inviter:id,name')->whereNull('accepted_at')->latest()->limit(20)->get()
+                ? UserInvitation::query()->with('inviter:id,name')->whereNull('member_id')->whereNull('accepted_at')->latest()->limit(20)->get()
                     ->map(fn (UserInvitation $invitation): array => [
                         'id' => $invitation->id,
                         'name' => $invitation->name,
