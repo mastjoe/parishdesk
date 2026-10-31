@@ -41,9 +41,16 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $wedding_date
  * @property string|null $phone
  * @property string|null $alt_phone
+ * @property string|null $whatsapp_phone
  * @property string|null $email
+ * @property bool $communication_consent
  * @property string|null $address
- * @property string|null $occupation
+ * @property string|null $city
+ * @property string|null $state
+ * @property string|null $emergency_contact_name
+ * @property string|null $emergency_contact_phone
+ * @property string|null $emergency_contact_relationship
+ * @property string|null $occupation ISCO-08 code, see Occupations
  * @property string|null $state_of_origin
  * @property string|null $lga_of_origin
  * @property int|null $community_id
@@ -60,8 +67,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 #[Fillable([
     'member_no', 'title', 'first_name', 'middle_name', 'last_name', 'baptismal_name', 'gender', 'date_of_birth',
-    'marital_status', 'wedding_date', 'phone', 'alt_phone', 'email', 'address', 'occupation', 'state_of_origin',
-    'lga_of_origin', 'community_id', 'family_id', 'family_role', 'status', 'joined_at', 'notes',
+    'marital_status', 'wedding_date', 'phone', 'alt_phone', 'whatsapp_phone', 'email', 'communication_consent',
+    'address', 'city', 'state', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
+    'occupation', 'state_of_origin', 'lga_of_origin', 'community_id', 'family_id', 'family_role', 'status', 'joined_at', 'notes',
 ])]
 class Member extends Model implements HasMedia
 {
@@ -102,6 +110,7 @@ class Member extends Model implements HasMedia
             'date_of_birth' => 'date',
             'wedding_date' => 'date',
             'joined_at' => 'date',
+            'communication_consent' => 'boolean',
         ];
     }
 

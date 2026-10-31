@@ -8,6 +8,7 @@ use App\Enums\MemberStatus;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\User;
+use App\Support\People\Occupations;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -33,6 +34,9 @@ class MemberFactory extends Factory
             'phone' => fake()->numerify('080########'),
             'email' => fake()->unique()->safeEmail(),
             'address' => fake()->streetAddress(),
+            'city' => fake()->randomElement(['Ikeja', 'Enugu', 'Onitsha', 'Port Harcourt', 'Abuja']),
+            'state' => fake()->randomElement(['Lagos', 'Enugu', 'Anambra', 'Rivers', 'FCT']),
+            'occupation' => fake()->randomElement(Occupations::codes()),
             'status' => MemberStatus::Active,
             'joined_at' => fake()->dateTimeBetween('-10 years'),
         ];

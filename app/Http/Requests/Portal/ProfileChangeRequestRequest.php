@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Portal;
 
 use App\Enums\MaritalStatus;
+use App\Support\People\Occupations;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -47,9 +48,15 @@ class ProfileChangeRequestRequest extends FormRequest
             'wedding_date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'phone' => ['nullable', 'string', 'max:30'],
             'alt_phone' => ['nullable', 'string', 'max:30'],
+            'whatsapp_phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
-            'occupation' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'occupation' => ['nullable', Rule::in(Occupations::codes())],
+            'emergency_contact_name' => ['nullable', 'string', 'max:150'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+            'emergency_contact_relationship' => ['nullable', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:1000'],
         ];
     }

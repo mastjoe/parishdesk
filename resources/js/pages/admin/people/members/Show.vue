@@ -55,6 +55,7 @@ const props = defineProps<{
         MemberFields & {
             genderLabel: string;
             maritalStatus: string | null;
+            occupationLabel: string | null;
             familyRoleLabel: string | null;
             statusLabel: string;
             createdAt: string | null;
@@ -75,6 +76,7 @@ const props = defineProps<{
             expiresAt: string;
         } | null;
     };
+    occupationLabels: Record<string, string>;
     changeRequests: ChangeRequest[];
     activity: {
         id: number;
@@ -117,11 +119,32 @@ const details = computed(() => [
             ? formatPlainDate(props.member.wedding_date)
             : null,
     },
-    { label: 'Occupation', value: props.member.occupation },
+    { label: 'Occupation', value: props.member.occupationLabel },
     { label: 'Phone', value: props.member.phone },
     { label: 'Other phone', value: props.member.alt_phone },
+    { label: 'WhatsApp', value: props.member.whatsapp_phone },
     { label: 'Email', value: props.member.email },
+    {
+        label: 'Parish messages',
+        value: props.member.communication_consent ? 'Agreed' : 'Not agreed',
+    },
     { label: 'Address', value: props.member.address, wide: true },
+    { label: 'City or town', value: props.member.city },
+    { label: 'State', value: props.member.state },
+    {
+        label: 'Emergency contact',
+        value:
+            [
+                props.member.emergency_contact_name,
+                props.member.emergency_contact_relationship &&
+                    `(${props.member.emergency_contact_relationship})`,
+                props.member.emergency_contact_phone &&
+                    `· ${props.member.emergency_contact_phone}`,
+            ]
+                .filter(Boolean)
+                .join(' ') || null,
+        wide: true,
+    },
     { label: 'State of origin', value: props.member.state_of_origin },
     { label: 'LGA of origin', value: props.member.lga_of_origin },
     { label: 'Community', value: props.member.community },
@@ -170,6 +193,10 @@ const valueOf = (field: string, value: string | null) => {
 
     if (field === 'marital_status') {
         return optionLabel(props.options.maritalStatuses, value);
+    }
+
+    if (field === 'occupation') {
+        return props.occupationLabels[value] ?? value;
     }
 
     return field.endsWith('date') || field === 'date_of_birth'

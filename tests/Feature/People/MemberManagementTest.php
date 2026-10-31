@@ -56,6 +56,8 @@ test('member details are validated', function (array $input, string $error) {
     'unknown status' => [['status' => 'gone'], 'status'],
     'birth date in the future' => [['date_of_birth' => now()->addDay()->toDateString()], 'date_of_birth'],
     'family without a role' => [fn () => ['family_id' => Family::factory()->create()->id], 'family_role'],
+    'occupation not on the list' => [['occupation' => 'astronaut'], 'occupation'],
+    'consent that is not yes or no' => [['communication_consent' => 'maybe'], 'communication_consent'],
     'deleted family' => [fn () => ['family_id' => tap(Family::factory()->create())->delete()->id, 'family_role' => 'child'], 'family_id'],
 ]);
 
@@ -72,6 +74,33 @@ test('names are tidied and the family role is dropped without a family', functio
     expect($member->first_name)->toBe('Grace Ada')
         ->and($member->email)->toBe('grace@example.com')
         ->and($member->family_role)->toBeNull();
+});
+
+test('contact, residence and emergency details are saved, and consent starts off', function () {
+    $clerk = User::factory()->withPermissions(Permission::MembersCreate, Permission::MembersUpdate)->create();
+
+    $this->actingAs($clerk)->post(route('admin.members.store'), [
+        'first_name' => 'Grace', 'last_name' => 'Okafor', 'gender' => 'female', 'status' => 'active',
+        'whatsapp_phone' => '08031234567', 'city' => 'Enugu', 'state' => 'Enugu',
+        'emergency_contact_name' => 'Ada Okafor', 'emergency_contact_phone' => '08020000000',
+        'emergency_contact_relationship' => 'Sister',
+    ])->assertSessionHasNoErrors();
+
+    $member = Member::query()->sole();
+
+    expect($member->only(['whatsapp_phone', 'city', 'state', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship', 'communication_consent']))
+        ->toBe([
+            'whatsapp_phone' => '08031234567', 'city' => 'Enugu', 'state' => 'Enugu',
+            'emergency_contact_name' => 'Ada Okafor', 'emergency_contact_phone' => '08020000000',
+            'emergency_contact_relationship' => 'Sister', 'communication_consent' => false,
+        ]);
+
+    $this->actingAs($clerk)->put(route('admin.members.update', $member), [
+        ...$member->only(['first_name', 'last_name']), 'gender' => 'female', 'status' => 'active',
+        'communication_consent' => true,
+    ])->assertSessionHasNoErrors();
+
+    expect($member->refresh()->communication_consent)->toBeTrue();
 });
 
 test('a photo can be uploaded, replaced and removed', function () {

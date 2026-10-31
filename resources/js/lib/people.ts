@@ -12,9 +12,15 @@ export const memberFieldLabels: Record<string, string> = {
     wedding_date: 'Wedding date',
     phone: 'Phone',
     alt_phone: 'Other phone',
+    whatsapp_phone: 'WhatsApp number',
     email: 'Email',
     address: 'Address',
+    city: 'City',
+    state: 'State',
     occupation: 'Occupation',
+    emergency_contact_name: 'Emergency contact name',
+    emergency_contact_phone: 'Emergency contact phone',
+    emergency_contact_relationship: 'Emergency contact relationship',
 };
 
 /** The badge tone for each member status. */

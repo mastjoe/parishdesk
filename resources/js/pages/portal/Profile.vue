@@ -4,6 +4,7 @@ import { Clock, Pencil, TriangleAlert } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import OptionSelect from '@/components/app/OptionSelect.vue';
+import SearchableSelect from '@/components/app/SearchableSelect.vue';
 import StatusBadge from '@/components/app/StatusBadge.vue';
 import MemberAvatar from '@/components/people/MemberAvatar.vue';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatRelative } from '@/lib/format';
 import { formatPlainDate, memberFieldLabels, optionLabel } from '@/lib/people';
 import { destroy, store } from '@/routes/portal/profile/changes';
-import type { MemberRow, Option } from '@/types';
+import type { GroupedOption, MemberRow, Option } from '@/types';
 
 type Values = Record<
     | 'title'
@@ -26,9 +27,15 @@ type Values = Record<
     | 'wedding_date'
     | 'phone'
     | 'alt_phone'
+    | 'whatsapp_phone'
     | 'email'
     | 'address'
-    | 'occupation',
+    | 'city'
+    | 'state'
+    | 'occupation'
+    | 'emergency_contact_name'
+    | 'emergency_contact_phone'
+    | 'emergency_contact_relationship',
     string | null
 >;
 
@@ -52,6 +59,7 @@ const props = defineProps<{
         reviewedAt: string | null;
     } | null;
     maritalStatuses: Option[];
+    occupations: GroupedOption[];
 }>();
 
 const editing = ref(false);
@@ -66,7 +74,9 @@ const startValues = () => {
     return Object.fromEntries(
         Object.entries(values).map(([key, value]) => [
             key,
-            key === 'marital_status' ? value : (value ?? ''),
+            ['marital_status', 'occupation'].includes(key)
+                ? value
+                : (value ?? ''),
         ]),
     ) as Record<keyof Values, string> & { marital_status: string | null };
 };
@@ -97,6 +107,10 @@ const display = (field: string, value: string | null | undefined) => {
         return optionLabel(props.maritalStatuses, value);
     }
 
+    if (field === 'occupation') {
+        return optionLabel(props.occupations, value);
+    }
+
     return field.includes('date') ? formatPlainDate(value) : value;
 };
 
@@ -110,9 +124,24 @@ const rows = computed(() => [
     { label: 'Marital status', value: props.member.maritalStatus },
     { label: 'Phone', value: props.member.values.phone },
     { label: 'Other phone', value: props.member.values.alt_phone },
+    { label: 'WhatsApp', value: props.member.values.whatsapp_phone },
     { label: 'Email', value: props.member.values.email },
     { label: 'Address', value: props.member.values.address },
-    { label: 'Occupation', value: props.member.values.occupation },
+    { label: 'City or town', value: props.member.values.city },
+    { label: 'State', value: props.member.values.state },
+    {
+        label: 'Emergency contact',
+        value: [
+            props.member.values.emergency_contact_name,
+            props.member.values.emergency_contact_phone,
+        ]
+            .filter(Boolean)
+            .join(' · '),
+    },
+    {
+        label: 'Occupation',
+        value: display('occupation', props.member.values.occupation),
+    },
     { label: 'Community', value: props.member.community },
     { label: 'Family', value: props.member.family?.name },
     {
@@ -130,9 +159,14 @@ const textFields: { key: keyof Values; type?: string; wide?: boolean }[] = [
     { key: 'date_of_birth', type: 'date' },
     { key: 'phone', type: 'tel' },
     { key: 'alt_phone', type: 'tel' },
-    { key: 'email', type: 'email', wide: true },
+    { key: 'whatsapp_phone', type: 'tel' },
+    { key: 'email', type: 'email' },
     { key: 'address', wide: true },
-    { key: 'occupation' },
+    { key: 'city' },
+    { key: 'state' },
+    { key: 'emergency_contact_name', wide: true },
+    { key: 'emergency_contact_phone', type: 'tel' },
+    { key: 'emergency_contact_relationship' },
     { key: 'wedding_date', type: 'date' },
 ];
 </script>
@@ -257,6 +291,16 @@ const textFields: { key: keyof Values; type?: string; wide?: boolean }[] = [
                         none-label="Not recorded"
                     />
                     <InputError :message="form.errors.marital_status" />
+                </div>
+                <div class="grid gap-2 sm:col-span-2">
+                    <Label for="occupation">Occupation</Label>
+                    <SearchableSelect
+                        id="occupation"
+                        v-model="form.occupation"
+                        :options="occupations"
+                        placeholder="Type to search, e.g. nurse, tailor"
+                    />
+                    <InputError :message="form.errors.occupation" />
                 </div>
                 <div class="grid gap-2 sm:col-span-2">
                     <Label for="note">Note for the office (optional)</Label>

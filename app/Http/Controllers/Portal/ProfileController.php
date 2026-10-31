@@ -48,6 +48,7 @@ class ProfileController extends Controller
                 'reviewedAt' => $latest->reviewed_at?->toIso8601String(),
             ] : null,
             'maritalStatuses' => PeopleOptions::enums()['maritalStatuses'],
+            'occupations' => PeopleOptions::occupations(),
         ]);
     }
 

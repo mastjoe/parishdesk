@@ -25,9 +25,16 @@ return new class extends Migration
             $table->date('wedding_date')->nullable();
             $table->string('phone', 30)->nullable();
             $table->string('alt_phone', 30)->nullable();
+            $table->string('whatsapp_phone', 30)->nullable();
             $table->string('email')->nullable()->index();
+            $table->boolean('communication_consent')->default(false);
             $table->string('address')->nullable();
-            $table->string('occupation', 100)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->string('state', 100)->nullable();
+            $table->string('emergency_contact_name', 150)->nullable();
+            $table->string('emergency_contact_phone', 30)->nullable();
+            $table->string('emergency_contact_relationship', 50)->nullable();
+            $table->string('occupation', 20)->nullable();
             $table->string('state_of_origin', 100)->nullable();
             $table->string('lga_of_origin', 100)->nullable();
             $table->foreignId('community_id')->nullable()->constrained()->nullOnDelete();

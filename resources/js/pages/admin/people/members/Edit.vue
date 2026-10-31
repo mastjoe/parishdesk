@@ -3,7 +3,12 @@ import { Head, setLayoutProps } from '@inertiajs/vue3';
 import PageHeader from '@/components/app/PageHeader.vue';
 import MemberForm from '@/components/people/MemberForm.vue';
 import { edit, index, show } from '@/routes/admin/members';
-import type { CommunityOption, MemberFields, PeopleOptions } from '@/types';
+import type {
+    CommunityOption,
+    GroupedOption,
+    MemberFields,
+    PeopleOptions,
+} from '@/types';
 
 const props = defineProps<{
     member: MemberFields & {
@@ -15,6 +20,7 @@ const props = defineProps<{
     family: { id: number; name: string } | null;
     communities: CommunityOption[];
     options: PeopleOptions;
+    occupations: GroupedOption[];
 }>();
 
 setLayoutProps({
@@ -44,6 +50,7 @@ setLayoutProps({
             :family="family"
             :communities="communities"
             :options="options"
+            :occupations="occupations"
         />
     </div>
 </template>

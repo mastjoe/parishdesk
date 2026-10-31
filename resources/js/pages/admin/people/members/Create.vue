@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import PageHeader from '@/components/app/PageHeader.vue';
 import MemberForm from '@/components/people/MemberForm.vue';
 import { create, index } from '@/routes/admin/members';
-import type { CommunityOption, PeopleOptions } from '@/types';
+import type { CommunityOption, GroupedOption, PeopleOptions } from '@/types';
 
 defineOptions({
     layout: {
@@ -17,6 +17,7 @@ defineOptions({
 const props = defineProps<{
     communities: CommunityOption[];
     options: PeopleOptions;
+    occupations: GroupedOption[];
     family: { id: number; name: string; communityId: number | null } | null;
 }>();
 
@@ -32,9 +33,16 @@ const initial = {
     wedding_date: null,
     phone: null,
     alt_phone: null,
+    whatsapp_phone: null,
     email: null,
+    communication_consent: false,
     address: null,
+    city: null,
+    state: null,
     occupation: null,
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    emergency_contact_relationship: null,
     state_of_origin: null,
     lga_of_origin: null,
     community_id: props.family?.communityId ?? null,
@@ -59,6 +67,7 @@ const initial = {
             :family="family"
             :communities="communities"
             :options="options"
+            :occupations="occupations"
         />
     </div>
 </template>

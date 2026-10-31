@@ -11,6 +11,7 @@ use App\Models\ProfileChangeRequest;
 use App\Models\UserInvitation;
 use App\Support\People\MemberPresenter;
 use App\Support\People\MemberTable;
+use App\Support\People\Occupations;
 use App\Support\People\PeopleOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class MemberController extends Controller
         $family = $request->filled('family') ? Family::query()->find($request->integer('family')) : null;
 
         return Inertia::render('admin/people/members/Create', [
+            'occupations' => PeopleOptions::occupations(),
             'communities' => PeopleOptions::communities(),
             'options' => PeopleOptions::enums(),
             'family' => $family !== null ? ['id' => $family->id, 'name' => $family->name, 'communityId' => $family->community_id] : null,
@@ -103,6 +105,7 @@ class MemberController extends Controller
                 ...MemberPresenter::form($member),
                 'genderLabel' => $member->gender->label(),
                 'maritalStatus' => $member->marital_status?->label(),
+                'occupationLabel' => Occupations::label($member->occupation),
                 'familyRoleLabel' => $member->family_role?->label(),
                 'statusLabel' => $member->status->label(),
                 'dateOfBirth' => $member->date_of_birth?->toDateString(),
@@ -127,6 +130,7 @@ class MemberController extends Controller
                     'expiresAt' => $invitation->expires_at->toIso8601String(),
                 ] : null,
             ],
+            'occupationLabels' => PeopleOptions::occupationLabels(),
             'changeRequests' => $member->changeRequests()->with('reviewer:id,name')->latest()->limit(10)->get()
                 ->map(fn (ProfileChangeRequest $change): array => [
                     'id' => $change->id,
@@ -169,6 +173,7 @@ class MemberController extends Controller
         $member->load('family:id,name');
 
         return Inertia::render('admin/people/members/Edit', [
+            'occupations' => PeopleOptions::occupations(),
             'member' => [
                 'id' => $member->id,
                 'memberNo' => $member->member_no,

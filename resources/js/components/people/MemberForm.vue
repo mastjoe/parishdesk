@@ -5,14 +5,21 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import OptionSelect from '@/components/app/OptionSelect.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
+import SearchableSelect from '@/components/app/SearchableSelect.vue';
 import MemberAvatar from '@/components/people/MemberAvatar.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { families as lookupFamilies } from '@/routes/admin/lookup';
 import { index, show, store, update } from '@/routes/admin/members';
-import type { CommunityOption, MemberFields, PeopleOptions } from '@/types';
+import type {
+    CommunityOption,
+    GroupedOption,
+    MemberFields,
+    PeopleOptions,
+} from '@/types';
 
 type FamilyChoice = {
     id: number;
@@ -29,6 +36,7 @@ const props = defineProps<{
     family: FamilyChoice | null;
     communities: CommunityOption[];
     options: PeopleOptions;
+    occupations: GroupedOption[];
 }>();
 
 const text = (value: string | null) => value ?? '';
@@ -47,9 +55,18 @@ const form = useForm({
     wedding_date: text(initial.wedding_date),
     phone: text(initial.phone),
     alt_phone: text(initial.alt_phone),
+    whatsapp_phone: text(initial.whatsapp_phone),
     email: text(initial.email),
+    communication_consent: initial.communication_consent,
     address: text(initial.address),
-    occupation: text(initial.occupation),
+    city: text(initial.city),
+    state: text(initial.state),
+    occupation: initial.occupation,
+    emergency_contact_name: text(initial.emergency_contact_name),
+    emergency_contact_phone: text(initial.emergency_contact_phone),
+    emergency_contact_relationship: text(
+        initial.emergency_contact_relationship,
+    ),
     state_of_origin: text(initial.state_of_origin),
     lga_of_origin: text(initial.lga_of_origin),
     community_id: initial.community_id,
@@ -283,7 +300,12 @@ const displayName = computed(
                     </div>
                     <div class="grid gap-2 sm:col-span-3">
                         <Label for="occupation">Occupation</Label>
-                        <Input id="occupation" v-model="form.occupation" />
+                        <SearchableSelect
+                            id="occupation"
+                            v-model="form.occupation"
+                            :options="occupations"
+                            placeholder="Type to search, e.g. nurse, tailor, accountant"
+                        />
                         <InputError :message="form.errors.occupation" />
                     </div>
                 </div>
@@ -312,15 +334,56 @@ const displayName = computed(
                     <Input id="alt_phone" v-model="form.alt_phone" type="tel" />
                     <InputError :message="form.errors.alt_phone" />
                 </div>
-                <div class="grid gap-2 sm:col-span-2">
+                <div class="grid gap-2">
+                    <Label for="whatsapp_phone">WhatsApp number</Label>
+                    <Input
+                        id="whatsapp_phone"
+                        v-model="form.whatsapp_phone"
+                        type="tel"
+                    />
+                    <InputError :message="form.errors.whatsapp_phone" />
+                </div>
+                <div class="grid gap-2">
                     <Label for="email">Email</Label>
                     <Input id="email" v-model="form.email" type="email" />
                     <InputError :message="form.errors.email" />
+                </div>
+                <div class="flex items-start gap-3 sm:col-span-2">
+                    <Checkbox
+                        id="communication_consent"
+                        :model-value="form.communication_consent"
+                        class="mt-0.5"
+                        @update:model-value="
+                            form.communication_consent = $event === true
+                        "
+                    />
+                    <div class="grid gap-1">
+                        <Label for="communication_consent"
+                            >Happy to receive parish messages</Label
+                        >
+                        <p class="text-xs text-muted-foreground">
+                            Announcements and reminders by email, SMS or
+                            WhatsApp. Leave unticked until the member agrees.
+                        </p>
+                        <InputError
+                            :message="form.errors.communication_consent"
+                        />
+                    </div>
                 </div>
                 <div class="grid gap-2 sm:col-span-2">
                     <Label for="address">Home address</Label>
                     <Input id="address" v-model="form.address" />
                     <InputError :message="form.errors.address" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="city">City or town</Label>
+                    <Input id="city" v-model="form.city" />
+                    <InputError :message="form.errors.city" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="state">State</Label>
+                    <Input id="state" v-model="form.state" />
+                    <InputError :message="form.errors.state" />
                 </div>
                 <div class="grid gap-2">
                     <Label for="state_of_origin">State of origin</Label>
@@ -334,6 +397,53 @@ const displayName = computed(
                     <Label for="lga_of_origin">LGA of origin</Label>
                     <Input id="lga_of_origin" v-model="form.lga_of_origin" />
                     <InputError :message="form.errors.lga_of_origin" />
+                </div>
+            </div>
+        </section>
+
+        <!-- Emergency contact -->
+        <section class="grid gap-x-8 gap-y-4 lg:grid-cols-3">
+            <div class="space-y-1">
+                <h2 class="font-semibold">Emergency contact</h2>
+                <p class="text-sm text-muted-foreground">
+                    Who to call if something happens to this member, for example
+                    during a sick call or a parish outing.
+                </p>
+            </div>
+            <div
+                class="grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2 lg:col-span-2"
+            >
+                <div class="grid gap-2 sm:col-span-2">
+                    <Label for="emergency_contact_name">Name</Label>
+                    <Input
+                        id="emergency_contact_name"
+                        v-model="form.emergency_contact_name"
+                    />
+                    <InputError :message="form.errors.emergency_contact_name" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="emergency_contact_phone">Phone</Label>
+                    <Input
+                        id="emergency_contact_phone"
+                        v-model="form.emergency_contact_phone"
+                        type="tel"
+                    />
+                    <InputError
+                        :message="form.errors.emergency_contact_phone"
+                    />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="emergency_contact_relationship"
+                        >Relationship</Label
+                    >
+                    <Input
+                        id="emergency_contact_relationship"
+                        v-model="form.emergency_contact_relationship"
+                        placeholder="Sister, son, friend…"
+                    />
+                    <InputError
+                        :message="form.errors.emergency_contact_relationship"
+                    />
                 </div>
             </div>
         </section>

@@ -47,9 +47,9 @@ class MemberPresenter
     }
 
     /**
-     * Get every stored field, as the strings a form works with.
+     * Get every stored field, as the values a form works with.
      *
-     * @return array<string, string|int|null>
+     * @return array<string, string|int|bool|null>
      */
     public static function form(Member $member): array
     {
@@ -65,9 +65,16 @@ class MemberPresenter
             'wedding_date' => $member->wedding_date?->toDateString(),
             'phone' => $member->phone,
             'alt_phone' => $member->alt_phone,
+            'whatsapp_phone' => $member->whatsapp_phone,
             'email' => $member->email,
+            'communication_consent' => $member->communication_consent,
             'address' => $member->address,
+            'city' => $member->city,
+            'state' => $member->state,
             'occupation' => $member->occupation,
+            'emergency_contact_name' => $member->emergency_contact_name,
+            'emergency_contact_phone' => $member->emergency_contact_phone,
+            'emergency_contact_relationship' => $member->emergency_contact_relationship,
             'state_of_origin' => $member->state_of_origin,
             'lga_of_origin' => $member->lga_of_origin,
             'community_id' => $member->community_id,

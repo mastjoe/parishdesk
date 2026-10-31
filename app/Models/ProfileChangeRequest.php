@@ -41,7 +41,8 @@ class ProfileChangeRequest extends Model
      */
     public const array FIELDS = [
         'title', 'first_name', 'middle_name', 'last_name', 'baptismal_name', 'date_of_birth',
-        'marital_status', 'wedding_date', 'phone', 'alt_phone', 'email', 'address', 'occupation',
+        'marital_status', 'wedding_date', 'phone', 'alt_phone', 'whatsapp_phone', 'email', 'address', 'city',
+        'state', 'occupation', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
     ];
 
     /**

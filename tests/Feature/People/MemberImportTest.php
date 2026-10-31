@@ -38,6 +38,36 @@ test('an uploaded file is previewed with suggested column matches', function () 
             ]));
 });
 
+test('a plain state column is matched to where the member lives, and next of kin to the emergency contact', function () {
+    $this->actingAs($this->importer)
+        ->post(route('admin.members.import.upload'), ['file' => csvUpload("First name,Surname,Gender,State,State of origin,Next of kin,WhatsApp\nGrace,Okafor,F,Lagos,Enugu,Ada Okafor,0803\n")]);
+
+    $this->actingAs($this->importer)
+        ->get(route('admin.members.import.create'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('upload.suggested.state', 'State')
+            ->where('upload.suggested.state_of_origin', 'State of origin')
+            ->where('upload.suggested.emergency_contact_name', 'Next of kin')
+            ->where('upload.suggested.whatsapp_phone', 'WhatsApp'));
+});
+
+test('job titles are matched to the closest occupation on the list', function () {
+    $csv = implode("\n", [
+        'First name,Surname,Gender,Occupation',
+        'Grace,Okafor,F,Staff Nurse',
+        'Peter,Eze,M,retired',
+        'John,Bosco,M,Church sexton',
+    ]);
+
+    $this->actingAs($this->importer)->post(route('admin.members.import.upload'), ['file' => csvUpload($csv)]);
+    $this->actingAs($this->importer)->post(route('admin.members.import.store'), ['mapping' => [
+        'first_name' => 'First name', 'last_name' => 'Surname', 'gender' => 'Gender', 'occupation' => 'Occupation',
+    ]])->assertSessionHasNoErrors();
+
+    // Staff Nurse is a nursing professional, "retired" is on the list as is, and a sexton is not on it.
+    expect(Member::query()->orderBy('id')->pluck('occupation')->all())->toBe(['2221', 'retired', 'other']);
+});
+
 test('rows are imported, and invalid or duplicate rows are skipped with a reason', function () {
     $community = Community::factory()->create(['name' => 'St. Jude SCC']);
     Member::factory()->create(['first_name' => 'Peter', 'last_name' => 'Eze', 'date_of_birth' => '1985-07-01', 'email' => null]);

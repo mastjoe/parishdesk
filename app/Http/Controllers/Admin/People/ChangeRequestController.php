@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\People\ReviewChangeRequestRequest;
 use App\Models\ProfileChangeRequest;
 use App\Support\People\MemberPresenter;
+use App\Support\People\PeopleOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -51,6 +52,7 @@ class ChangeRequestController extends Controller
             'requests' => $requests,
             'status' => $status->value,
             'pendingCount' => ProfileChangeRequest::query()->pending()->count(),
+            'occupationLabels' => PeopleOptions::occupationLabels(),
         ]);
     }
 

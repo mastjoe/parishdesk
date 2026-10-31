@@ -83,6 +83,7 @@ class PeopleSeeder extends Seeder
                 'address' => fake()->streetAddress(),
                 'home_phone' => fake()->numerify('080########'),
             ]);
+            [$city, $state] = fake()->randomElement([['Ikeja', 'Lagos'], ['Enugu', 'Enugu'], ['Onitsha', 'Anambra'], ['Port Harcourt', 'Rivers']]);
 
             $weddingDate = now()->subYears(fake()->numberBetween(5, 40))->addDays(fake()->numberBetween(-20, 20));
 
@@ -94,6 +95,8 @@ class PeopleSeeder extends Seeder
                 $isChild = in_array($role, [FamilyRole::Child, FamilyRole::Dependant], true);
                 $isMarried = $marital === MaritalStatus::Married;
 
+                $phone = $isChild ? null : fake()->numerify('080########');
+
                 $saveMember->handle([
                     'title' => $isChild ? null : ($gender === Gender::Male ? 'Mr.' : 'Mrs.'),
                     'first_name' => $firstName,
@@ -102,10 +105,18 @@ class PeopleSeeder extends Seeder
                     'date_of_birth' => $birthday,
                     'marital_status' => $marital,
                     'wedding_date' => $isMarried ? $weddingDate : null,
-                    'phone' => $isChild ? null : fake()->numerify('080########'),
+                    'phone' => $phone,
+                    'whatsapp_phone' => $phone,
                     'email' => $isChild ? null : strtolower("{$firstName}.{$surname}@example.net"),
+                    'communication_consent' => ! $isChild,
                     'address' => $family->address,
-                    'occupation' => $isChild ? 'Student' : fake()->jobTitle(),
+                    'city' => $city,
+                    'state' => $state,
+                    // Student, or one of: trader, secondary teacher, nurse, civil engineer, tailor, accountant.
+                    'occupation' => $isChild ? 'student' : fake()->randomElement(['5211', '2330', '2221', '2142', '7531', '2411']),
+                    'emergency_contact_name' => $isChild ? null : fake()->name(),
+                    'emergency_contact_phone' => $isChild ? null : fake()->numerify('080########'),
+                    'emergency_contact_relationship' => $isChild ? null : fake()->randomElement(['Sibling', 'Parent', 'Friend', 'Cousin']),
                     'community_id' => $community->id,
                     'family_id' => $family->id,
                     'family_role' => $role,
@@ -119,7 +130,7 @@ class PeopleSeeder extends Seeder
             $saveMember->handle(Member::factory()->make([
                 'community_id' => $communities->random()->id,
                 'member_no' => null,
-            ])->only(['first_name', 'last_name', 'gender', 'date_of_birth', 'phone', 'email', 'address', 'status', 'joined_at', 'community_id']));
+            ])->only(['first_name', 'last_name', 'gender', 'date_of_birth', 'phone', 'email', 'address', 'city', 'state', 'status', 'joined_at', 'community_id']));
         }
 
         $communities[0]->update(['leader_member_id' => Member::query()->where('first_name', 'Emeka')->value('id')]);
@@ -135,7 +146,7 @@ class PeopleSeeder extends Seeder
             ProfileChangeRequest::query()->create([
                 'member_id' => $cecilia->id,
                 'submitted_by' => $account->id,
-                'changes' => ['phone' => '08031234567', 'occupation' => 'Nurse'],
+                'changes' => ['phone' => '08031234567', 'occupation' => '2221'],
                 'original' => ['phone' => $cecilia->phone, 'occupation' => $cecilia->occupation],
                 'note' => 'I changed my number and my job last month.',
             ]);

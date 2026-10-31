@@ -38,10 +38,11 @@ defineOptions({
     },
 });
 
-defineProps<{
+const props = defineProps<{
     requests: Paginated<ChangeRequest>;
     status: 'pending' | 'approved' | 'rejected';
     pendingCount: number;
+    occupationLabels: Record<string, string>;
 }>();
 
 const tabs = [
@@ -57,6 +58,10 @@ const show = (value: string | null | undefined, field: string) => {
 
     if (field === 'marital_status') {
         return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    if (field === 'occupation') {
+        return props.occupationLabels[value] ?? value;
     }
 
     return field.includes('date') ? formatPlainDate(value) : value;

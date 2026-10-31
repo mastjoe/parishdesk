@@ -8,6 +8,7 @@ use App\Enums\MemberStatus;
 use App\Models\Community;
 use App\Models\Member;
 use App\Support\Import\CsvFile;
+use App\Support\People\Occupations;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -39,9 +40,15 @@ class ImportMembers
         'wedding_date' => 'Wedding date',
         'phone' => 'Phone',
         'alt_phone' => 'Other phone',
+        'whatsapp_phone' => 'WhatsApp number',
         'email' => 'Email',
         'address' => 'Address',
+        'city' => 'City',
+        'state' => 'State',
         'occupation' => 'Occupation',
+        'emergency_contact_name' => 'Emergency contact name',
+        'emergency_contact_phone' => 'Emergency contact phone',
+        'emergency_contact_relationship' => 'Emergency contact relationship',
         'state_of_origin' => 'State of origin',
         'lga_of_origin' => 'LGA of origin',
         'community' => 'Community',
@@ -130,9 +137,15 @@ class ImportMembers
             'wedding_date' => ['nullable', 'date'],
             'phone' => ['nullable', 'string', 'max:30'],
             'alt_phone' => ['nullable', 'string', 'max:30'],
+            'whatsapp_phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
-            'occupation' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'occupation' => ['nullable', Rule::in(Occupations::codes())],
+            'emergency_contact_name' => ['nullable', 'string', 'max:150'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+            'emergency_contact_relationship' => ['nullable', 'string', 'max:50'],
             'state_of_origin' => ['nullable', 'string', 'max:100'],
             'lga_of_origin' => ['nullable', 'string', 'max:100'],
             'status' => ['required', Rule::enum(MemberStatus::class)],
@@ -180,6 +193,11 @@ class ImportMembers
         $data['marital_status'] = $this->choice($data['marital_status'] ?? null, MaritalStatus::class);
         $data['status'] = $this->choice($data['status'] ?? null, MemberStatus::class) ?? MemberStatus::Active->value;
         $data['email'] = isset($data['email']) ? Str::lower($data['email']) : null;
+
+        // Job titles are matched to the closest occupation on the list.
+        if (isset($data['occupation'])) {
+            $data['occupation'] = Occupations::guess($data['occupation']);
+        }
 
         $community = isset($data['community']) ? Str::lower($data['community']) : null;
         $data['community_id'] = $community !== null ? ($this->communities[$community] ?? null) : null;

@@ -3,6 +3,9 @@ export type Option = {
     label: string;
 };
 
+/** An option that belongs to a named group, e.g. an occupation. */
+export type GroupedOption = Option & { group: string };
+
 export type PeopleOptions = {
     genders: Option[];
     maritalStatuses: Option[];
@@ -50,9 +53,16 @@ export type MemberFields = {
     wedding_date: string | null;
     phone: string | null;
     alt_phone: string | null;
+    whatsapp_phone: string | null;
     email: string | null;
+    communication_consent: boolean;
     address: string | null;
+    city: string | null;
+    state: string | null;
     occupation: string | null;
+    emergency_contact_name: string | null;
+    emergency_contact_phone: string | null;
+    emergency_contact_relationship: string | null;
     state_of_origin: string | null;
     lga_of_origin: string | null;
     community_id: number | null;

@@ -11,7 +11,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 beforeEach(function () {
     $this->member = Member::factory()->withAccount()->create([
         'first_name' => 'Grace', 'last_name' => 'Okafor', 'phone' => '08010000000',
-        'occupation' => 'Teacher', 'date_of_birth' => '1990-03-12', 'marital_status' => MaritalStatus::Single,
+        'occupation' => '2330', 'date_of_birth' => '1990-03-12', 'marital_status' => MaritalStatus::Single,
     ]);
     $this->account = $this->member->user;
 });
@@ -43,6 +43,24 @@ test('a member sends only the details that changed', function () {
         ->and($this->member->refresh()->phone)->toBe('08010000000');
 });
 
+test('a member can ask to update their emergency contact and where they live', function () {
+    $this->actingAs($this->account)->post(route('portal.profile.changes.store'), profileForm($this->member, [
+        'city' => 'Enugu', 'emergency_contact_name' => 'Ada Okafor', 'emergency_contact_phone' => '08020000000',
+    ]))->assertSessionHasNoErrors();
+
+    expect(ProfileChangeRequest::query()->sole()->changes)->toBe([
+        'city' => 'Enugu', 'emergency_contact_name' => 'Ada Okafor', 'emergency_contact_phone' => '08020000000',
+    ]);
+});
+
+test('the occupation must come from the list', function () {
+    $this->actingAs($this->account)
+        ->post(route('portal.profile.changes.store'), profileForm($this->member, ['occupation' => 'Nurse']))
+        ->assertSessionHasErrors('occupation');
+
+    expect(ProfileChangeRequest::query()->count())->toBe(0);
+});
+
 test('sending nothing new is refused', function () {
     $this->actingAs($this->account)
         ->post(route('portal.profile.changes.store'), profileForm($this->member))
@@ -53,19 +71,20 @@ test('sending nothing new is refused', function () {
 
 test('fields members may not change are ignored', function () {
     $this->actingAs($this->account)->post(route('portal.profile.changes.store'), [
-        ...profileForm($this->member, ['occupation' => 'Nurse']),
+        ...profileForm($this->member, ['occupation' => '2221']),
         'status' => 'deceased',
         'member_no' => 'HACKED',
+        'communication_consent' => '1',
     ]);
 
-    expect(ProfileChangeRequest::query()->sole()->changes)->toBe(['occupation' => 'Nurse']);
+    expect(ProfileChangeRequest::query()->sole()->changes)->toBe(['occupation' => '2221']);
 });
 
 test('sending again replaces the pending request, and it can be withdrawn', function () {
-    $this->actingAs($this->account)->post(route('portal.profile.changes.store'), profileForm($this->member, ['occupation' => 'Nurse']));
-    $this->actingAs($this->account)->post(route('portal.profile.changes.store'), profileForm($this->member, ['occupation' => 'Doctor']));
+    $this->actingAs($this->account)->post(route('portal.profile.changes.store'), profileForm($this->member, ['occupation' => '2221']));
+    $this->actingAs($this->account)->post(route('portal.profile.changes.store'), profileForm($this->member, ['occupation' => '2142']));
 
-    expect(ProfileChangeRequest::query()->sole()->changes)->toBe(['occupation' => 'Doctor']);
+    expect(ProfileChangeRequest::query()->sole()->changes)->toBe(['occupation' => '2142']);
 
     $this->actingAs($this->account)->delete(route('portal.profile.changes.destroy'));
 

@@ -33,6 +33,29 @@ class PeopleOptions
     }
 
     /**
+     * Get every occupation for the occupation picker, grouped as on the ISCO list.
+     *
+     * @return list<array{value: string, label: string, group: string}>
+     */
+    public static function occupations(): array
+    {
+        return array_map(
+            fn (array $occupation): array => ['value' => $occupation['code'], 'label' => $occupation['label'], 'group' => $occupation['group']],
+            Occupations::all(),
+        );
+    }
+
+    /**
+     * Get the label of every occupation code, for showing requested changes.
+     *
+     * @return array<string, string>
+     */
+    public static function occupationLabels(): array
+    {
+        return array_column(Occupations::all(), 'label', 'code');
+    }
+
+    /**
      * Get every community as an id and name pair.
      *
      * @return list<array{id: int, name: string}>

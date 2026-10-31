@@ -7,6 +7,7 @@ use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MemberStatus;
 use App\Models\Member;
+use App\Support\People\Occupations;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -65,9 +66,16 @@ class SaveMemberRequest extends FormRequest
             'wedding_date' => ['nullable', 'date', 'before_or_equal:today'],
             'phone' => ['nullable', 'string', 'max:30'],
             'alt_phone' => ['nullable', 'string', 'max:30'],
+            'whatsapp_phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
+            'communication_consent' => ['boolean'],
             'address' => ['nullable', 'string', 'max:255'],
-            'occupation' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'occupation' => ['nullable', Rule::in(Occupations::codes())],
+            'emergency_contact_name' => ['nullable', 'string', 'max:150'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+            'emergency_contact_relationship' => ['nullable', 'string', 'max:50'],
             'state_of_origin' => ['nullable', 'string', 'max:100'],
             'lga_of_origin' => ['nullable', 'string', 'max:100'],
             'community_id' => ['nullable', 'integer', Rule::exists('communities', 'id')],
@@ -102,6 +110,7 @@ class SaveMemberRequest extends FormRequest
             'community_id' => 'community',
             'family_id' => 'family',
             'lga_of_origin' => 'LGA of origin',
+            'whatsapp_phone' => 'WhatsApp number',
         ];
     }
 }
