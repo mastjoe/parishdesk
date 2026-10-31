@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import type { ColumnDef } from '@tanstack/vue-table';
 import { Church, House, Pencil, Plus, Trash2, UsersRound } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
+import DataTable from '@/components/app/DataTable.vue';
 import EmptyState from '@/components/app/EmptyState.vue';
 import OptionSelect from '@/components/app/OptionSelect.vue';
 import PageHeader from '@/components/app/PageHeader.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
+import SearchInput from '@/components/app/SearchInput.vue';
 import StatusBadge from '@/components/app/StatusBadge.vue';
 import MemberAvatar from '@/components/people/MemberAvatar.vue';
 import { Button } from '@/components/ui/button';
@@ -44,11 +47,45 @@ defineOptions({
     },
 });
 
-defineProps<{
+const props = defineProps<{
     communities: CommunityRow[];
     options: PeopleOptions;
     can: { manage: boolean; viewMembers: boolean };
 }>();
+
+const columns = computed<ColumnDef<CommunityRow, unknown>[]>(() => [
+    { id: 'name', header: 'Community' },
+    { id: 'type', header: 'Type', meta: { class: 'hidden sm:table-cell' } },
+    { id: 'leader', header: 'Leader', meta: { class: 'hidden md:table-cell' } },
+    { id: 'members', header: 'Members', meta: { class: 'w-28' } },
+    {
+        id: 'families',
+        header: 'Families',
+        meta: { class: 'hidden w-28 lg:table-cell' },
+    },
+    ...(props.can.manage
+        ? [{ id: 'actions', header: '', meta: { class: 'w-24' } }]
+        : []),
+]);
+
+// Communities are few and all loaded at once, so search filters them in place.
+const search = ref('');
+const filteredCommunities = computed(() => {
+    const words = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+
+    return props.communities.filter((community) => {
+        const haystack = [
+            community.name,
+            community.typeLabel,
+            community.leader?.name,
+            community.description,
+        ]
+            .join(' ')
+            .toLowerCase();
+
+        return words.every((word) => haystack.includes(word));
+    });
+});
 
 const open = ref(false);
 const editing = ref<CommunityRow | null>(null);
@@ -125,28 +162,77 @@ const typeTone: Record<string, string> = {
             description="Create the communities members belong to, so you can group and filter the register by them."
         />
 
-        <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <article
-                v-for="community in communities"
-                :key="community.id"
-                class="flex flex-col gap-4 rounded-xl border bg-card p-5"
+        <template v-else>
+            <SearchInput
+                v-model="search"
+                placeholder="Search by name, leader or description…"
+            />
+
+            <DataTable
+                :columns="columns"
+                :data="filteredCommunities"
+                :row-key="(row) => row.id"
             >
-                <div class="flex items-start gap-3">
-                    <div class="min-w-0 flex-1 space-y-1">
-                        <h2 class="truncate font-semibold">
-                            {{ community.name }}
-                        </h2>
-                        <StatusBadge :tone="typeTone[community.type]">{{
-                            community.typeLabel
-                        }}</StatusBadge>
+                <template #cell-name="{ row }">
+                    <div class="min-w-0">
+                        <p class="truncate font-medium">{{ row.name }}</p>
+                        <p
+                            v-if="row.description"
+                            class="line-clamp-1 max-w-md text-xs text-muted-foreground"
+                        >
+                            {{ row.description }}
+                        </p>
                     </div>
-                    <div v-if="can.manage" class="flex gap-1">
+                </template>
+                <template #cell-type="{ row }">
+                    <StatusBadge :tone="typeTone[row.type]">{{
+                        row.typeLabel
+                    }}</StatusBadge>
+                </template>
+                <template #cell-leader="{ row }">
+                    <div v-if="row.leader" class="flex items-center gap-2">
+                        <MemberAvatar
+                            :name="row.leader.name"
+                            :photo-url="row.leader.photoUrl"
+                            class="size-7"
+                        />
+                        <span class="truncate">{{ row.leader.name }}</span>
+                    </div>
+                    <span v-else class="text-muted-foreground"
+                        >None chosen</span
+                    >
+                </template>
+                <template #cell-members="{ row }">
+                    <component
+                        :is="can.viewMembers ? Link : 'span'"
+                        :href="
+                            can.viewMembers
+                                ? membersIndex({
+                                      query: { filter: { community: row.id } },
+                                  })
+                                : undefined
+                        "
+                        class="inline-flex items-center gap-1.5 tabular-nums"
+                        :class="can.viewMembers ? 'hover:underline' : ''"
+                    >
+                        <UsersRound class="size-4 text-muted-foreground" />
+                        {{ row.membersCount }}
+                    </component>
+                </template>
+                <template #cell-families="{ row }">
+                    <span class="inline-flex items-center gap-1.5 tabular-nums">
+                        <House class="size-4 text-muted-foreground" />
+                        {{ row.familiesCount }}
+                    </span>
+                </template>
+                <template #cell-actions="{ row }">
+                    <div class="flex justify-end gap-1">
                         <Button
                             variant="ghost"
                             size="icon"
                             class="size-8"
-                            :aria-label="`Edit ${community.name}`"
-                            @click="openForm(community)"
+                            :aria-label="`Edit ${row.name}`"
+                            @click="openForm(row)"
                         >
                             <Pencil class="size-4" />
                         </Button>
@@ -154,61 +240,21 @@ const typeTone: Record<string, string> = {
                             variant="ghost"
                             size="icon"
                             class="size-8 text-destructive hover:text-destructive"
-                            :aria-label="`Delete ${community.name}`"
-                            @click="deleting = community"
+                            :aria-label="`Delete ${row.name}`"
+                            @click="deleting = row"
                         >
                             <Trash2 class="size-4" />
                         </Button>
                     </div>
-                </div>
-                <p
-                    v-if="community.description"
-                    class="line-clamp-2 text-sm text-muted-foreground"
-                >
-                    {{ community.description }}
-                </p>
-                <div class="mt-auto flex items-center gap-3 border-t pt-4">
-                    <template v-if="community.leader">
-                        <MemberAvatar
-                            :name="community.leader.name"
-                            :photo-url="community.leader.photoUrl"
-                            class="size-8"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium">
-                                {{ community.leader.name }}
-                            </p>
-                            <p class="text-xs text-muted-foreground">Leader</p>
-                        </div>
-                    </template>
-                    <p v-else class="flex-1 text-sm text-muted-foreground">
-                        No leader chosen
-                    </p>
-                    <component
-                        :is="can.viewMembers ? Link : 'span'"
-                        :href="
-                            can.viewMembers
-                                ? membersIndex({
-                                      query: {
-                                          filter: { community: community.id },
-                                      },
-                                  })
-                                : undefined
-                        "
-                        class="flex items-center gap-3 text-sm text-muted-foreground tabular-nums"
-                    >
-                        <span class="inline-flex items-center gap-1"
-                            ><UsersRound class="size-3.5" />
-                            {{ community.membersCount }}</span
-                        >
-                        <span class="inline-flex items-center gap-1"
-                            ><House class="size-3.5" />
-                            {{ community.familiesCount }}</span
-                        >
-                    </component>
-                </div>
-            </article>
-        </div>
+                </template>
+                <template #empty>
+                    <div class="flex flex-col items-center gap-2">
+                        <Church class="size-6" />
+                        No communities match "{{ search }}".
+                    </div>
+                </template>
+            </DataTable>
+        </template>
     </div>
 
     <Dialog v-model:open="open">
