@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MemberStatus;
 use App\Enums\Permission;
 use App\Http\Controllers\Admin\People\CelebrationController;
 use App\Http\Controllers\Controller;
@@ -11,6 +12,7 @@ use App\Models\ProfileChangeRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,6 +33,8 @@ class DashboardController extends Controller
                     'total' => Member::query()->count(),
                     'newThisMonth' => Member::query()->where('created_at', '>=', now()->startOfMonth())->count(),
                     'families' => Family::query()->count(),
+                    'active' => Member::query()->where('status', MemberStatus::Active)->count(),
+                    'ageGroups' => $this->ageGroups(),
                 ] : null,
                 'pendingChangeRequests' => $user->can(Permission::MembersChangeRequestsApprove)
                     ? ProfileChangeRequest::query()->pending()->count()
@@ -52,5 +56,27 @@ class DashboardController extends Controller
                 ])
                 : null,
         ]);
+    }
+
+    /**
+     * Count living members in the age groups parish ministries are organised around.
+     *
+     * @return array{groups: list<array{label: string, count: int}>, unknown: int}
+     */
+    private function ageGroups(): array
+    {
+        $groups = ['Children (0-12)' => [0, 12], 'Teens (13-17)' => [13, 17], 'Youth (18-35)' => [18, 35], 'Adults (36-59)' => [36, 59], 'Seniors (60+)' => [60, PHP_INT_MAX]];
+
+        $ages = Member::query()->whereNot('status', MemberStatus::Deceased)->pluck('date_of_birth')
+            ->map(fn (?CarbonInterface $birthday): ?int => $birthday?->age);
+
+        return [
+            'groups' => array_map(
+                fn (string $label, array $range): array => ['label' => $label, 'count' => $ages->filter(fn (?int $age): bool => $age !== null && $age >= $range[0] && $age <= $range[1])->count()],
+                array_keys($groups),
+                $groups,
+            ),
+            'unknown' => $ages->filter(fn (?int $age): bool => $age === null)->count(),
+        ];
     }
 }
