@@ -7,6 +7,7 @@ use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MemberStatus;
 use App\Models\Member;
+use App\Rules\OneParentPerFamily;
 use App\Support\People\Occupations;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -80,13 +81,23 @@ class SaveMemberRequest extends FormRequest
             'lga_of_origin' => ['nullable', 'string', 'max:100'],
             'community_id' => ['nullable', 'integer', Rule::exists('communities', 'id')],
             'family_id' => ['nullable', 'integer', Rule::exists('families', 'id')->withoutTrashed()],
-            'family_role' => ['nullable', 'required_with:family_id', Rule::enum(FamilyRole::class)],
+            'family_role' => ['nullable', 'required_with:family_id', Rule::enum(FamilyRole::class), $this->oneParent()],
             'status' => ['required', Rule::enum(MemberStatus::class)],
             'joined_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_photo' => ['boolean'],
         ];
+    }
+
+    /**
+     * Keep the chosen family to one father and one mother.
+     */
+    private function oneParent(): OneParentPerFamily
+    {
+        $member = $this->route('member');
+
+        return new OneParentPerFamily($this->integer('family_id') ?: null, $member instanceof Member ? $member->id : null);
     }
 
     /**

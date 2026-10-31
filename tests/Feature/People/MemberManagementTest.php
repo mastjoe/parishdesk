@@ -66,7 +66,7 @@ test('names are tidied and the family role is dropped without a family', functio
 
     $this->actingAs($clerk)->post(route('admin.members.store'), [
         'first_name' => '  Grace   Ada ', 'last_name' => 'Okafor', 'gender' => 'female', 'status' => 'active',
-        'email' => ' Grace@Example.COM ', 'family_role' => 'head',
+        'email' => ' Grace@Example.COM ', 'family_role' => 'father',
     ]);
 
     $member = Member::query()->sole();
@@ -188,11 +188,11 @@ test('the age filter includes a member on the birthday that moves them up a grou
         ->assertInertia(fn (Assert $page) => $page->has('members.data', 1)->where('members.data.0.name', fn (string $name) => str_starts_with($name, 'Turning')));
 });
 
-test('a member profile lists the rest of their family, head first', function () {
+test('a member profile lists the rest of their family, parents first', function () {
     $family = Family::factory()->create();
     $child = Member::factory()->inFamily($family, FamilyRole::Child)->create(['first_name' => 'Chidi']);
-    Member::factory()->inFamily($family, FamilyRole::Head)->create(['first_name' => 'Emeka']);
-    Member::factory()->inFamily($family, FamilyRole::Spouse)->create(['first_name' => 'Ngozi']);
+    Member::factory()->inFamily($family, FamilyRole::Mother)->create(['first_name' => 'Ngozi']);
+    Member::factory()->inFamily($family, FamilyRole::Father)->create(['first_name' => 'Emeka']);
     $viewer = User::factory()->withPermissions(Permission::MembersView)->create();
 
     $this->actingAs($viewer)
@@ -200,8 +200,8 @@ test('a member profile lists the rest of their family, head first', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/people/members/Show')
             ->has('family.members', 2)
-            ->where('family.members.0.familyRole', 'head')
-            ->where('family.members.1.familyRole', 'spouse')
+            ->where('family.members.0.familyRole', 'father')
+            ->where('family.members.1.familyRole', 'mother')
             ->where('can.update', false));
 });
 

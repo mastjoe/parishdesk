@@ -73,10 +73,12 @@ class SaveFamilyRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $heads = collect((array) $this->input('members'))->where('family_role', FamilyRole::Head->value)->count();
+                $roles = collect((array) $this->input('members'))->countBy('family_role');
 
-                if ($heads > 1) {
-                    $validator->errors()->add('members', __('Only one person can be the head of the family.'));
+                foreach ([FamilyRole::Father, FamilyRole::Mother] as $parent) {
+                    if ($roles->get($parent->value, 0) > 1) {
+                        $validator->errors()->add('members', __('A family can only have one :role.', ['role' => Str::lower($parent->label())]));
+                    }
                 }
             },
         ];

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\People\AddFamilyMemberRequest;
 use App\Models\Family;
 use App\Models\Member;
+use App\Rules\OneParentPerFamily;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -43,7 +44,9 @@ class FamilyMemberController extends Controller
         Gate::authorize('update', $family);
         abort_unless($member->family_id === $family->id, 404);
 
-        $validated = $request->validate(['family_role' => ['required', Rule::enum(FamilyRole::class)]]);
+        $validated = $request->validate([
+            'family_role' => ['required', Rule::enum(FamilyRole::class), new OneParentPerFamily($family->id, $member->id)],
+        ]);
 
         $member->update($validated);
 

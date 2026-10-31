@@ -17,7 +17,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * A household in the parish. Each member records their own role in it, so
- * the head of family is the member whose family role is "head".
+ * the head of family is the father, or the mother when there is no father.
  *
  * @property int $id
  * @property string $name
@@ -62,7 +62,10 @@ class Family extends Model
      */
     public function head(): HasOne
     {
-        return $this->hasOne(Member::class)->where('family_role', FamilyRole::Head)->oldestOfMany();
+        return $this->hasOne(Member::class)
+            ->whereIn('family_role', [FamilyRole::Father, FamilyRole::Mother])
+            ->orderByRaw(FamilyRole::ORDER_EXPRESSION)
+            ->oldest('id');
     }
 
     /**

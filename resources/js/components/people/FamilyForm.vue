@@ -57,15 +57,23 @@ const form = useForm({
 const picked = ref<PickedMember[]>([]);
 const pickerKey = ref(0);
 
-/** Suggest the head first, then a spouse, then children. */
-const suggestedRole = () => {
-    const roles = form.members.map((member) => member.family_role);
+/**
+ * Suggest Father or Mother from an adult's gender while that place is free,
+ * otherwise Child. Staff can always pick another role.
+ */
+const suggestedRole = (member: PickedMember) => {
+    const roles = form.members.map((row) => row.family_role);
+    const isAdult = member.age === null || member.age >= 18;
 
-    return !roles.includes('head')
-        ? 'head'
-        : !roles.includes('spouse')
-          ? 'spouse'
-          : 'child';
+    if (isAdult && member.gender === 'male' && !roles.includes('father')) {
+        return 'father';
+    }
+
+    if (isAdult && member.gender === 'female' && !roles.includes('mother')) {
+        return 'mother';
+    }
+
+    return 'child';
 };
 
 const addMember = (member: PickedMember | null) => {
@@ -73,7 +81,7 @@ const addMember = (member: PickedMember | null) => {
         picked.value.push(member);
         form.members.push({
             member_id: member.id,
-            family_role: suggestedRole(),
+            family_role: suggestedRole(member),
         });
     }
 
@@ -291,8 +299,8 @@ const submit = () => {
                         class="flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
                     >
                         <UserPlus class="size-5" />
-                        No members added yet. Search above to add the head of
-                        the family first.
+                        No members added yet. Search above to add the parents
+                        and children.
                     </div>
                 </div>
             </section>

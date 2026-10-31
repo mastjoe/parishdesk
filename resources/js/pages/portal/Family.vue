@@ -16,10 +16,13 @@ defineProps<{
 }>();
 
 const roleLabel: Record<string, string> = {
-    head: 'Head of family',
-    spouse: 'Spouse',
+    father: 'Father',
+    mother: 'Mother',
+    grandparent: 'Grandparent',
     child: 'Child',
-    dependant: 'Dependant',
+    grandchild: 'Grandchild',
+    relative: 'Relative',
+    dependent: 'Dependent',
     other: 'Family member',
 };
 </script>

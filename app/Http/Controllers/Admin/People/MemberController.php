@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\People;
 
 use App\Actions\Members\SaveMember;
+use App\Enums\FamilyRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\People\SaveMemberRequest;
 use App\Models\Family;
@@ -93,7 +94,7 @@ class MemberController extends Controller
         $relatives = $member->family?->members()
             ->with('media')
             ->whereKeyNot($member->id)
-            ->orderByRaw("case family_role when 'head' then 0 when 'spouse' then 1 when 'child' then 2 else 3 end")
+            ->orderByRaw(FamilyRole::ORDER_EXPRESSION)
             ->orderBy('date_of_birth')
             ->get() ?? collect();
 

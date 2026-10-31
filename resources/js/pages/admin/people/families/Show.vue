@@ -71,31 +71,45 @@ setLayoutProps({
     ],
 });
 
-/** Parents on top, children below, everyone else last. */
-const generations = computed(() => [
-    {
-        key: 'parents',
-        title: 'Parents',
+/** The family tree, oldest generation first; relatives and dependents come last. */
+const lineage = [
+    { key: 'grandparents', title: 'Grandparents', roles: ['grandparent'] },
+    { key: 'parents', title: 'Parents', roles: ['father', 'mother'] },
+    { key: 'children', title: 'Children', roles: ['child'] },
+    { key: 'grandchildren', title: 'Grandchildren', roles: ['grandchild'] },
+];
+
+const generations = computed(() => {
+    const tree = lineage.map((generation) => ({
+        ...generation,
         members: props.members.filter((member) =>
-            ['head', 'spouse'].includes(member.familyRole ?? ''),
+            generation.roles.includes(member.familyRole ?? ''),
         ),
-    },
-    {
-        key: 'children',
-        title: 'Children',
-        members: props.members.filter(
-            (member) => member.familyRole === 'child',
-        ),
-    },
-    {
-        key: 'others',
-        title: 'Also in the household',
-        members: props.members.filter(
-            (member) =>
-                !['head', 'spouse', 'child'].includes(member.familyRole ?? ''),
-        ),
-    },
-]);
+        connectsDown: false,
+    }));
+
+    // Draw a line down from a generation when a later one has people in it.
+    tree.forEach((generation, position) => {
+        generation.connectsDown =
+            generation.members.length > 0 &&
+            tree.slice(position + 1).some((later) => later.members.length);
+    });
+
+    const inTree = lineage.flatMap((generation) => generation.roles);
+
+    return [
+        ...tree,
+        {
+            key: 'household',
+            title: 'Also in the household',
+            roles: [],
+            members: props.members.filter(
+                (member) => !inTree.includes(member.familyRole ?? ''),
+            ),
+            connectsDown: false,
+        },
+    ];
+});
 
 // Adding an existing member
 const addForm = useForm({
@@ -197,7 +211,7 @@ const deleteFamily = () => router.delete(destroy(props.family.id).url);
                     description="Add people already in the register, or register someone new straight into this family."
                 />
                 <template
-                    v-for="(generation, position) in generations"
+                    v-for="generation in generations"
                     :key="generation.key"
                 >
                     <div
@@ -293,9 +307,7 @@ const deleteFamily = () => router.delete(destroy(props.family.id).url);
                             </article>
                         </div>
                         <div
-                            v-if="
-                                position === 0 && generations[1].members.length
-                            "
+                            v-if="generation.connectsDown"
                             class="mx-auto h-5 w-px bg-border"
                         />
                     </div>

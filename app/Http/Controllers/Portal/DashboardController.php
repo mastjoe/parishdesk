@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\Enums\FamilyRole;
 use App\Enums\MaritalStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
@@ -24,7 +25,7 @@ class DashboardController extends Controller
     {
         $member = $request->user()->member?->load([
             'family' => fn ($query) => $query->withCount('members'),
-            'family.members' => fn ($query) => $query->with('media')->orderByRaw("family_role = 'head' desc")->orderBy('date_of_birth')->limit(5),
+            'family.members' => fn ($query) => $query->with('media')->orderByRaw(FamilyRole::ORDER_EXPRESSION)->orderBy('date_of_birth')->limit(5),
             'community:id,name',
         ]);
 

@@ -37,11 +37,11 @@ test('celebrations further off, or an anniversary after the marriage ended, are 
         ->assertInertia(fn (Assert $page) => $page->where('member.celebrations', []));
 });
 
-test('the portal home previews the family, head first, up to five people', function () {
+test('the portal home previews the family, parents first, up to five people', function () {
     $family = Family::factory()->create();
     $member = Member::factory()->inFamily($family, FamilyRole::Child)->withAccount()->create(['date_of_birth' => '2010-01-01']);
     Member::factory()->count(5)->inFamily($family, FamilyRole::Child)->create(['date_of_birth' => '2012-01-01']);
-    $head = Member::factory()->inFamily($family, FamilyRole::Head)->create(['date_of_birth' => '1975-01-01']);
+    $head = Member::factory()->inFamily($family, FamilyRole::Father)->create(['date_of_birth' => '1975-01-01']);
 
     $this->actingAs($member->user)
         ->get(route('portal.dashboard'))

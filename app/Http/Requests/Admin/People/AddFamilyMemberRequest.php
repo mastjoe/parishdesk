@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin\People;
 
 use App\Enums\FamilyRole;
 use App\Models\Family;
+use App\Rules\OneParentPerFamily;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,8 +30,18 @@ class AddFamilyMemberRequest extends FormRequest
     {
         return [
             'member_id' => ['required', 'integer', Rule::exists('members', 'id')->withoutTrashed()],
-            'family_role' => ['required', Rule::enum(FamilyRole::class)],
+            'family_role' => ['required', Rule::enum(FamilyRole::class), $this->oneParent()],
         ];
+    }
+
+    /**
+     * Keep the family to one father and one mother.
+     */
+    private function oneParent(): OneParentPerFamily
+    {
+        $family = $this->route('family');
+
+        return new OneParentPerFamily($family instanceof Family ? $family->id : null, $this->integer('member_id') ?: null);
     }
 
     /**

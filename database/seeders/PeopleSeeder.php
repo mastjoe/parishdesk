@@ -47,29 +47,30 @@ class PeopleSeeder extends Seeder
 
         $families = [
             ['Obi', 0, [
-                ['Emeka', Gender::Male, FamilyRole::Head, '-48 years', MaritalStatus::Married],
-                ['Cecilia', Gender::Female, FamilyRole::Spouse, '-44 years', MaritalStatus::Married],
+                ['Emeka', Gender::Male, FamilyRole::Father, '-48 years', MaritalStatus::Married],
+                ['Cecilia', Gender::Female, FamilyRole::Mother, '-44 years', MaritalStatus::Married],
                 ['Chidi', Gender::Male, FamilyRole::Child, '-15 years', null],
                 ['Adaeze', Gender::Female, FamilyRole::Child, '-9 years', null],
             ]],
             ['Okafor', 0, [
-                ['Grace', Gender::Female, FamilyRole::Head, '-67 years', MaritalStatus::Widowed],
+                ['Grace', Gender::Female, FamilyRole::Mother, '-67 years', MaritalStatus::Widowed],
                 ['Ifeanyi', Gender::Male, FamilyRole::Child, '-34 years', MaritalStatus::Single],
             ]],
             ['Adeyemi', 1, [
-                ['Tunde', Gender::Male, FamilyRole::Head, '-39 years', MaritalStatus::Married],
-                ['Funmi', Gender::Female, FamilyRole::Spouse, '-36 years', MaritalStatus::Married],
+                ['Tunde', Gender::Male, FamilyRole::Father, '-39 years', MaritalStatus::Married],
+                ['Funmi', Gender::Female, FamilyRole::Mother, '-36 years', MaritalStatus::Married],
                 ['Tobi', Gender::Male, FamilyRole::Child, '-6 years', null],
             ]],
             ['Musa', 2, [
-                ['Daniel', Gender::Male, FamilyRole::Head, '-52 years', MaritalStatus::Married],
-                ['Ruth', Gender::Female, FamilyRole::Spouse, '-50 years', MaritalStatus::Married],
+                ['Daniel', Gender::Male, FamilyRole::Father, '-52 years', MaritalStatus::Married],
+                ['Ruth', Gender::Female, FamilyRole::Mother, '-50 years', MaritalStatus::Married],
                 ['Esther', Gender::Female, FamilyRole::Child, '-22 years', MaritalStatus::Single],
-                ['Samuel', Gender::Male, FamilyRole::Dependant, '-17 years', null],
+                ['Samuel', Gender::Male, FamilyRole::Dependent, '-17 years', null],
             ]],
             ['Nwosu', 3, [
-                ['Patrick', Gender::Male, FamilyRole::Head, '-71 years', MaritalStatus::Married],
-                ['Agnes', Gender::Female, FamilyRole::Spouse, '-69 years', MaritalStatus::Married],
+                ['Patrick', Gender::Male, FamilyRole::Father, '-71 years', MaritalStatus::Married],
+                ['Agnes', Gender::Female, FamilyRole::Mother, '-69 years', MaritalStatus::Married],
+                ['Chinedu', Gender::Male, FamilyRole::Grandchild, '-12 years', null],
             ]],
         ];
 
@@ -92,7 +93,8 @@ class PeopleSeeder extends Seeder
                 $birthday = now()->modify($age)->addDays($index * 3 - 6);
                 $index++;
 
-                $isChild = in_array($role, [FamilyRole::Child, FamilyRole::Dependant], true);
+                // Minors have no phone, email or job of their own.
+                $isChild = $birthday->age < 18;
                 $isMarried = $marital === MaritalStatus::Married;
 
                 $phone = $isChild ? null : fake()->numerify('080########');
