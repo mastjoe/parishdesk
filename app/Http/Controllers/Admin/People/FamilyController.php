@@ -49,13 +49,39 @@ class FamilyController extends Controller
     }
 
     /**
+     * Show the form for a new family.
+     */
+    public function create(): Response
+    {
+        Gate::authorize('create', Family::class);
+
+        return Inertia::render('admin/people/families/Create', [
+            'communities' => PeopleOptions::communities(),
+            'familyRoles' => PeopleOptions::enums()['familyRoles'],
+        ]);
+    }
+
+    /**
      * Create a family.
      */
     public function store(SaveFamilyRequest $request): RedirectResponse
     {
-        $family = Family::query()->create($request->validated());
+        $members = $request->members();
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created. Now add its members.', ['name' => $family->name])]);
+        $family = DB::transaction(function () use ($request, $members): Family {
+            $family = Family::query()->create($request->familyData());
+            $people = Member::query()->findMany(array_column($members, 'member_id'))->keyBy('id');
+
+            foreach ($members as $row) {
+                $family->addMember($people[$row['member_id']], $row['family_role']);
+            }
+
+            return $family;
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $members === []
+            ? __(':name created. Now add its members.', ['name' => $family->name])
+            : trans_choice(':name created with :count member.|:name created with :count members.', count($members), ['name' => $family->name])]);
 
         return to_route('admin.families.show', $family);
     }
@@ -74,7 +100,6 @@ class FamilyController extends Controller
             'family' => [
                 'id' => $family->id,
                 'name' => $family->name,
-                'community_id' => $family->community_id,
                 'community' => $family->community?->name,
                 'address' => $family->address,
                 'home_phone' => $family->home_phone,
@@ -87,7 +112,6 @@ class FamilyController extends Controller
                     'phone' => $member->phone,
                 ])
                 ->values(),
-            'communities' => PeopleOptions::communities(),
             'options' => PeopleOptions::enums(),
             'can' => [
                 'update' => $user->can('update', $family),
@@ -99,15 +123,36 @@ class FamilyController extends Controller
     }
 
     /**
+     * Show the form for editing a family's details.
+     */
+    public function edit(Family $family): Response
+    {
+        Gate::authorize('update', $family);
+
+        return Inertia::render('admin/people/families/Edit', [
+            'family' => [
+                'id' => $family->id,
+                'name' => $family->name,
+                'community_id' => $family->community_id,
+                'address' => $family->address,
+                'home_phone' => $family->home_phone,
+                'notes' => $family->notes,
+                'membersCount' => $family->members()->count(),
+            ],
+            'communities' => PeopleOptions::communities(),
+        ]);
+    }
+
+    /**
      * Update a family's details.
      */
     public function update(SaveFamilyRequest $request, Family $family): RedirectResponse
     {
-        $family->update($request->validated());
+        $family->update($request->familyData());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Family details saved.')]);
 
-        return back();
+        return to_route('admin.families.show', $family);
     }
 
     /**

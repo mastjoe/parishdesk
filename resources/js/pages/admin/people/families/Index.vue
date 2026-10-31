@@ -2,12 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { House, Plus } from '@lucide/vue';
-import { ref } from 'vue';
 import DataTable from '@/components/app/DataTable.vue';
 import PageHeader from '@/components/app/PageHeader.vue';
 import Pagination from '@/components/app/Pagination.vue';
 import SearchInput from '@/components/app/SearchInput.vue';
-import FamilyFormDialog from '@/components/people/FamilyFormDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     Select,
@@ -17,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useTableQuery } from '@/composables/useTableQuery';
-import { index, show } from '@/routes/admin/families';
+import { create, index, show } from '@/routes/admin/families';
 import type { CommunityOption, Paginated, TableState } from '@/types';
 
 type FamilyRow = {
@@ -46,8 +44,6 @@ const { search, filters, toggleSort, sortDirection } = useTableQuery(
     props.table,
 );
 
-const creating = ref(false);
-
 const columns: ColumnDef<FamilyRow, unknown>[] = [
     { id: 'name', header: 'Family', meta: { sortKey: 'name' } },
     { id: 'head', header: 'Head', meta: { class: 'hidden md:table-cell' } },
@@ -73,8 +69,10 @@ const columns: ColumnDef<FamilyRow, unknown>[] = [
             description="Households in the parish and the members who belong to them."
         >
             <template #actions>
-                <Button v-if="can.create" @click="creating = true">
-                    <Plus class="size-4" /> New family
+                <Button v-if="can.create" as-child>
+                    <Link :href="create()">
+                        <Plus class="size-4" /> New family
+                    </Link>
                 </Button>
             </template>
         </PageHeader>
@@ -160,6 +158,4 @@ const columns: ColumnDef<FamilyRow, unknown>[] = [
 
         <Pagination :paginator="families" />
     </div>
-
-    <FamilyFormDialog v-model:open="creating" :communities="communities" />
 </template>

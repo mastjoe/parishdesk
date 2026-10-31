@@ -53,7 +53,7 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middleware('throttle:6,1')
             ->name('members.invitation.store');
 
-        Route::resource('families', FamilyController::class)->except(['create', 'edit']);
+        Route::resource('families', FamilyController::class);
         Route::post('families/{family}/members', [FamilyMemberController::class, 'store'])->name('families.members.store');
         Route::patch('families/{family}/members/{member}', [FamilyMemberController::class, 'update'])->name('families.members.update');
         Route::delete('families/{family}/members/{member}', [FamilyMemberController::class, 'destroy'])->name('families.members.destroy');

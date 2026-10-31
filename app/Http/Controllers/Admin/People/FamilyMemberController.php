@@ -23,11 +23,7 @@ class FamilyMemberController extends Controller
         $member = Member::query()->findOrFail($request->integer('member_id'));
         $moved = $member->family_id !== null && $member->family_id !== $family->id;
 
-        $member->update([
-            'family_id' => $family->id,
-            'family_role' => $request->enum('family_role', FamilyRole::class),
-            'community_id' => $member->community_id ?? $family->community_id,
-        ]);
+        $family->addMember($member, $request->enum('family_role', FamilyRole::class) ?? FamilyRole::Other);
 
         Inertia::flash('toast', [
             'type' => 'success',

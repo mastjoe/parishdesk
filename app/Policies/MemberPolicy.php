@@ -32,7 +32,7 @@ class MemberPolicy
     {
         return $user->canAny([
             Permission::MembersView, Permission::MembersCreate, Permission::MembersUpdate,
-            Permission::FamiliesUpdate, Permission::CommunitiesManage, Permission::ClergyManage,
+            Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::CommunitiesManage, Permission::ClergyManage,
         ]);
     }
 

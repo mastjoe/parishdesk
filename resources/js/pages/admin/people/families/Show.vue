@@ -15,7 +15,6 @@ import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
 import EmptyState from '@/components/app/EmptyState.vue';
 import OptionSelect from '@/components/app/OptionSelect.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
-import FamilyFormDialog from '@/components/people/FamilyFormDialog.vue';
 import MemberAvatar from '@/components/people/MemberAvatar.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { optionLabel } from '@/lib/people';
-import { destroy, index, show } from '@/routes/admin/families';
+import { destroy, edit, index, show } from '@/routes/admin/families';
 import {
     destroy as removeMember,
     store as addMember,
@@ -41,7 +40,7 @@ import {
     create as createMember,
     show as memberShow,
 } from '@/routes/admin/members';
-import type { CommunityOption, MemberSummary, PeopleOptions } from '@/types';
+import type { MemberSummary, PeopleOptions } from '@/types';
 
 type FamilyMember = MemberSummary & { phone: string | null };
 
@@ -49,7 +48,6 @@ const props = defineProps<{
     family: {
         id: number;
         name: string;
-        community_id: number | null;
         community: string | null;
         address: string | null;
         home_phone: string | null;
@@ -57,7 +55,6 @@ const props = defineProps<{
         createdAt: string | null;
     };
     members: FamilyMember[];
-    communities: CommunityOption[];
     options: PeopleOptions;
     can: {
         update: boolean;
@@ -99,8 +96,6 @@ const generations = computed(() => [
         ),
     },
 ]);
-
-const editing = ref(false);
 
 // Adding an existing member
 const addForm = useForm({
@@ -175,13 +170,10 @@ const deleteFamily = () => router.delete(destroy(props.family.id).url);
                 </p>
             </div>
             <div class="flex gap-2">
-                <Button
-                    v-if="can.update"
-                    variant="outline"
-                    size="sm"
-                    @click="editing = true"
-                >
-                    <Pencil class="size-4" /> Edit
+                <Button v-if="can.update" variant="outline" size="sm" as-child>
+                    <Link :href="edit(family.id)">
+                        <Pencil class="size-4" /> Edit
+                    </Link>
                 </Button>
                 <Button
                     v-if="can.delete"
@@ -377,12 +369,6 @@ const deleteFamily = () => router.delete(destroy(props.family.id).url);
             </aside>
         </div>
     </div>
-
-    <FamilyFormDialog
-        v-model:open="editing"
-        :family="family"
-        :communities="communities"
-    />
 
     <ConfirmDialog
         :open="leaving !== null"

@@ -66,6 +66,19 @@ class Family extends Model
     }
 
     /**
+     * Place a member in the family with the given role, moving them from any
+     * other family. A member without a community joins the family's.
+     */
+    public function addMember(Member $member, FamilyRole $role): void
+    {
+        $member->update([
+            'family_id' => $this->id,
+            'family_role' => $role,
+            'community_id' => $member->community_id ?? $this->community_id,
+        ]);
+    }
+
+    /**
      * Configure which attributes are written to the audit log.
      */
     public function getActivitylogOptions(): LogOptions

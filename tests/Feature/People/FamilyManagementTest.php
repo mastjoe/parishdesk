@@ -22,6 +22,116 @@ test('a family can be created and opens on its page', function () {
     expect($family->name)->toBe('Okafor Family')->and($family->community_id)->toBe($community->id);
 });
 
+test('members can be placed in a family with their roles as it is created', function () {
+    $community = Community::factory()->create();
+    $old = Family::factory()->create();
+    $head = Member::factory()->create(['community_id' => null]);
+    $spouse = Member::factory()->inFamily($old, FamilyRole::Child)->create();
+    $clerk = User::factory()->withPermissions(Permission::FamiliesCreate, Permission::FamiliesView)->create();
+
+    $this->actingAs($clerk)->post(route('admin.families.store'), [
+        'name' => 'Okafor Family',
+        'community_id' => $community->id,
+        'members' => [
+            ['member_id' => $head->id, 'family_role' => 'head'],
+            ['member_id' => $spouse->id, 'family_role' => 'spouse'],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    $family = Family::query()->where('name', 'Okafor Family')->sole();
+
+    expect($family->head?->is($head))->toBeTrue()
+        ->and($head->refresh()->community_id)->toBe($community->id)
+        ->and($spouse->refresh()->family_id)->toBe($family->id)
+        ->and($spouse->family_role)->toBe(FamilyRole::Spouse)
+        ->and($old->members()->count())->toBe(0);
+});
+
+test('members added while creating a family are validated', function (Closure $members, string $error) {
+    $clerk = User::factory()->withPermissions(Permission::FamiliesCreate)->create();
+
+    $this->actingAs($clerk)
+        ->post(route('admin.families.store'), ['name' => 'Okafor Family', 'members' => $members()])
+        ->assertSessionHasErrors($error);
+
+    expect(Family::query()->count())->toBe(0);
+})->with([
+    'two heads' => [fn () => [
+        ['member_id' => Member::factory()->create()->id, 'family_role' => 'head'],
+        ['member_id' => Member::factory()->create()->id, 'family_role' => 'head'],
+    ], 'members'],
+    'the same person twice' => [fn () => [
+        ['member_id' => $id = Member::factory()->create()->id, 'family_role' => 'head'],
+        ['member_id' => $id, 'family_role' => 'child'],
+    ], 'members.0.member_id'],
+    'a removed member' => [fn () => [
+        ['member_id' => tap(Member::factory()->create())->delete()->id, 'family_role' => 'child'],
+    ], 'members.0.member_id'],
+    'an unknown role' => [fn () => [
+        ['member_id' => Member::factory()->create()->id, 'family_role' => 'cousin'],
+    ], 'members.0.family_role'],
+]);
+
+test('editing a family ignores any members sent with it', function () {
+    $family = Family::factory()->create();
+    $member = Member::factory()->create();
+    $editor = User::factory()->withPermissions(Permission::FamiliesUpdate)->create();
+
+    $this->actingAs($editor)->put(route('admin.families.update', $family), [
+        'name' => $family->name, 'members' => [['member_id' => $member->id, 'family_role' => 'head']],
+    ])->assertSessionHasNoErrors();
+
+    expect($member->refresh()->family_id)->toBeNull();
+});
+
+test('staff who can create families can search the register for members', function () {
+    Member::factory()->create(['first_name' => 'Zebedee']);
+    $clerk = User::factory()->withPermissions(Permission::FamiliesCreate)->create();
+
+    $this->actingAs($clerk)
+        ->getJson(route('admin.lookup.members', ['q' => 'Zebedee']))
+        ->assertOk()
+        ->assertJsonPath('data.0.name', fn (string $name) => str_contains($name, 'Zebedee'));
+});
+
+test('the new family page lists the communities to choose from', function () {
+    Community::factory()->create(['name' => 'St. Jude SCC']);
+    $clerk = User::factory()->withPermissions(Permission::FamiliesCreate)->create();
+
+    $this->actingAs($clerk)
+        ->get(route('admin.families.create'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/people/families/Create')
+            ->where('communities.0.name', 'St. Jude SCC'));
+});
+
+test('a family is edited on its own page and saving returns to the family', function () {
+    $family = Family::factory()->create(['name' => 'Okafor Family']);
+    Member::factory()->count(2)->inFamily($family)->create();
+    $editor = User::factory()->withPermissions(Permission::FamiliesUpdate, Permission::FamiliesView)->create();
+
+    $this->actingAs($editor)
+        ->get(route('admin.families.edit', $family))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/people/families/Edit')
+            ->where('family.name', 'Okafor Family')
+            ->where('family.membersCount', 2));
+
+    $this->actingAs($editor)
+        ->put(route('admin.families.update', $family), ['name' => 'Okafor-Eze Family', 'home_phone' => '08010000000'])
+        ->assertRedirect(route('admin.families.show', $family));
+
+    expect($family->refresh()->only(['name', 'home_phone']))->toBe(['name' => 'Okafor-Eze Family', 'home_phone' => '08010000000']);
+});
+
+test('the family form pages need the matching permission', function () {
+    $family = Family::factory()->create();
+    $viewer = User::factory()->withPermissions(Permission::FamiliesView)->create();
+
+    $this->actingAs($viewer)->get(route('admin.families.create'))->assertForbidden();
+    $this->actingAs($viewer)->get(route('admin.families.edit', $family))->assertForbidden();
+});
+
 test('adding a member moves them out of their old family and fills in the community', function () {
     $community = Community::factory()->create();
     $old = Family::factory()->create();
