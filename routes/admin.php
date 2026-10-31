@@ -58,7 +58,7 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::patch('families/{family}/members/{member}', [FamilyMemberController::class, 'update'])->name('families.members.update');
         Route::delete('families/{family}/members/{member}', [FamilyMemberController::class, 'destroy'])->name('families.members.destroy');
 
-        Route::resource('communities', CommunityController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('communities', CommunityController::class)->except('show');
         Route::resource('clergy', ClergyAssignmentController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::get('change-requests', [ChangeRequestController::class, 'index'])->name('change-requests.index');

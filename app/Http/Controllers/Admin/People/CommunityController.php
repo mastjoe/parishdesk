@@ -37,11 +37,22 @@ class CommunityController extends Controller
                     'membersCount' => $community->members_count,
                     'familiesCount' => $community->families_count,
                 ]),
-            'options' => PeopleOptions::enums(),
             'can' => [
                 'manage' => $user->can('create', Community::class),
                 'viewMembers' => $user->can('viewAny', Member::class),
             ],
+        ]);
+    }
+
+    /**
+     * Show the form for a new community.
+     */
+    public function create(): Response
+    {
+        Gate::authorize('create', Community::class);
+
+        return Inertia::render('admin/people/communities/Create', [
+            'options' => PeopleOptions::enums(),
         ]);
     }
 
@@ -54,7 +65,30 @@ class CommunityController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $community->name])]);
 
-        return back();
+        return to_route('admin.communities.index');
+    }
+
+    /**
+     * Show the form for editing a community.
+     */
+    public function edit(Community $community): Response
+    {
+        Gate::authorize('update', $community);
+
+        $community->load('leader.media')->loadCount(['members', 'families']);
+
+        return Inertia::render('admin/people/communities/Edit', [
+            'community' => [
+                'id' => $community->id,
+                'name' => $community->name,
+                'type' => $community->type->value,
+                'description' => $community->description,
+                'leader' => $community->leader !== null ? MemberPresenter::summary($community->leader) : null,
+                'membersCount' => $community->members_count,
+                'familiesCount' => $community->families_count,
+            ],
+            'options' => PeopleOptions::enums(),
+        ]);
     }
 
     /**
@@ -66,7 +100,7 @@ class CommunityController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $community->name])]);
 
-        return back();
+        return to_route('admin.communities.index');
     }
 
     /**
