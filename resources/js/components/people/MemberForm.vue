@@ -3,6 +3,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import {
     Camera,
     Check,
+    ImageUp,
     ChevronLeft,
     ChevronRight,
     Church,
@@ -19,6 +20,7 @@ import InputError from '@/components/InputError.vue';
 import OptionSelect from '@/components/app/OptionSelect.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
 import SearchableSelect from '@/components/app/SearchableSelect.vue';
+import CameraCapture from '@/components/people/CameraCapture.vue';
 import MemberAvatar from '@/components/people/MemberAvatar.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -140,9 +142,7 @@ const photoUrl = computed(() =>
         : (preview.value ?? props.member?.photoUrl ?? null),
 );
 
-const onPhotoChosen = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-
+const setPhoto = (file: File | null) => {
     if (preview.value) {
         URL.revokeObjectURL(preview.value);
     }
@@ -151,6 +151,11 @@ const onPhotoChosen = (event: Event) => {
     form.remove_photo = false;
     preview.value = file ? URL.createObjectURL(file) : null;
 };
+
+const onPhotoChosen = (event: Event) =>
+    setPhoto((event.target as HTMLInputElement).files?.[0] ?? null);
+
+const cameraOpen = ref(false);
 
 const removePhoto = () => {
     form.photo = null;
@@ -590,8 +595,16 @@ const displayName = computed(
                             size="sm"
                             @click="photoInput?.click()"
                         >
-                            <Camera class="size-4" />
-                            {{ photoUrl ? 'Change photo' : 'Add photo' }}
+                            <ImageUp class="size-4" />
+                            {{ photoUrl ? 'Upload another' : 'Upload photo' }}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            @click="cameraOpen = true"
+                        >
+                            <Camera class="size-4" /> Take photo
                         </Button>
                         <Button
                             v-if="photoUrl"
@@ -1011,5 +1024,6 @@ const displayName = computed(
                 </Button>
             </div>
         </div>
+        <CameraCapture v-model:open="cameraOpen" @captured="setPhoto" />
     </form>
 </template>
