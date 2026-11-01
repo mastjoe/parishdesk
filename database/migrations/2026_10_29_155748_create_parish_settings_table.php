@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();
-            $table->string('logo_path')->nullable();
             $table->string('theme', 30)->default('marian');
             $table->string('custom_color', 7)->nullable();
             $table->string('currency', 3)->default('NGN');

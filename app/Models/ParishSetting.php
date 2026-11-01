@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * The single row holding the parish profile, branding and defaults.
@@ -25,7 +26,6 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $phone
  * @property string|null $email
  * @property string|null $website
- * @property string|null $logo_path
  * @property string $theme
  * @property string|null $custom_color
  * @property string $currency
@@ -40,17 +40,22 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 #[Fillable([
     'name', 'patron_saint', 'diocese', 'deanery', 'address', 'city', 'state', 'country', 'phone', 'email', 'website',
-    'logo_path', 'theme', 'custom_color', 'currency', 'timezone', 'locale', 'fiscal_year_start_month',
+    'theme', 'custom_color', 'currency', 'timezone', 'locale', 'fiscal_year_start_month',
     'bank_name', 'bank_account_name', 'bank_account_number',
 ])]
-class ParishSetting extends Model
+class ParishSetting extends Model implements HasMedia
 {
-    use LogsActivity;
+    use InteractsWithMedia, LogsActivity;
 
     /**
      * The cache key holding the current settings row.
      */
     private const string CACHE_KEY = 'parish-settings';
+
+    /**
+     * The cache key holding the logo URL, which every page shows.
+     */
+    private const string LOGO_CACHE_KEY = 'parish-settings.logo-url';
 
     /**
      * Get the attributes that should be cast.
@@ -69,7 +74,7 @@ class ParishSetting extends Model
      */
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(self::CACHE_KEY));
+        static::saved(fn () => self::flushCache());
     }
 
     /**
@@ -89,11 +94,32 @@ class ParishSetting extends Model
     }
 
     /**
+     * Forget the cached settings and logo, e.g. after the logo changes.
+     */
+    public static function flushCache(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::LOGO_CACHE_KEY);
+    }
+
+    /**
+     * Register the parish branding media: one logo at a time.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
+    }
+
+    /**
      * Get the public URL of the parish logo.
+     *
+     * The URL is cached so that sharing it with every page costs no query.
      */
     public function logoUrl(): ?string
     {
-        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+        return Cache::rememberForever(self::LOGO_CACHE_KEY, fn (): string => $this->getFirstMediaUrl('logo')) ?: null;
     }
 
     /**

@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission as PermissionModel;
 
 /**
- * Turns an accepted invitation into a user account.
+ * Turns an accepted invitation into a user account, linked to the member
+ * record when the invitation was sent to a member.
  */
 class AcceptInvitation
 {
@@ -30,6 +31,10 @@ class AcceptInvitation
 
             $user->syncRoles(Role::query()->whereIn('name', $invitation->roles ?? [])->get());
             $user->syncPermissions(PermissionModel::query()->whereIn('name', $invitation->permissions ?? [])->get());
+
+            if ($invitation->member !== null && $invitation->member->user_id === null) {
+                $invitation->member->forceFill(['user_id' => $user->id])->save();
+            }
 
             $invitation->update(['accepted_at' => now(), 'user_id' => $user->id]);
 

@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\Settings\AppearanceRequest;
 use App\Models\ParishSetting;
 use App\Support\Theme\Theme;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,22 +37,19 @@ class AppearanceController extends Controller
     public function update(AppearanceRequest $request): RedirectResponse
     {
         $settings = ParishSetting::current();
-        $attributes = [
+
+        $settings->update([
             'theme' => $request->string('theme')->value(),
             'custom_color' => $request->filled('custom_color') ? strtolower($request->string('custom_color')->value()) : $settings->custom_color,
-        ];
+        ]);
 
-        if ($request->hasFile('logo') || $request->boolean('remove_logo')) {
-            if ($settings->logo_path !== null) {
-                Storage::disk('public')->delete($settings->logo_path);
-            }
-
-            $attributes['logo_path'] = $request->hasFile('logo')
-                ? $request->file('logo')->store('branding', 'public')
-                : null;
+        if ($request->hasFile('logo')) {
+            $settings->addMediaFromRequest('logo')->toMediaCollection('logo');
+        } elseif ($request->boolean('remove_logo')) {
+            $settings->clearMediaCollection('logo');
         }
 
-        $settings->update($attributes);
+        ParishSetting::flushCache();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Appearance saved.')]);
 

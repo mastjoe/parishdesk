@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        // Uploads managed by spatie/laravel-medialibrary (member photos, the
+        // parish logo). It lives inside the public disk, so the existing
+        // `storage:link` symlink serves it at /storage/media.
+        'media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/media'),
+            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage/media',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

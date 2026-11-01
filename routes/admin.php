@@ -6,6 +6,17 @@ use App\Http\Controllers\Admin\Access\RoleController;
 use App\Http\Controllers\Admin\Access\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\People\CelebrationController;
+use App\Http\Controllers\Admin\People\ChangeRequestController;
+use App\Http\Controllers\Admin\People\ClergyAssignmentController;
+use App\Http\Controllers\Admin\People\CommunityController;
+use App\Http\Controllers\Admin\People\FamilyController;
+use App\Http\Controllers\Admin\People\FamilyMemberController;
+use App\Http\Controllers\Admin\People\LookupController;
+use App\Http\Controllers\Admin\People\MemberController;
+use App\Http\Controllers\Admin\People\MemberExportController;
+use App\Http\Controllers\Admin\People\MemberImportController;
+use App\Http\Controllers\Admin\People\MemberInvitationController;
 use App\Http\Controllers\Admin\Settings\AppearanceController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\ParishProfileController;
@@ -28,6 +39,33 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        // People. These routes come before the member resource so that
+        // "members/import" is not read as a member id.
+        Route::get('members/import', [MemberImportController::class, 'create'])->name('members.import.create');
+        Route::post('members/import/upload', [MemberImportController::class, 'upload'])->name('members.import.upload');
+        Route::post('members/import', [MemberImportController::class, 'store'])->name('members.import.store');
+        Route::delete('members/import', [MemberImportController::class, 'destroy'])->name('members.import.destroy');
+        Route::get('members/export', MemberExportController::class)->name('members.export');
+        Route::get('members/celebrations', CelebrationController::class)->name('members.celebrations');
+        Route::resource('members', MemberController::class);
+        Route::post('members/{member}/invitation', [MemberInvitationController::class, 'store'])
+            ->middleware('throttle:6,1')
+            ->name('members.invitation.store');
+
+        Route::resource('families', FamilyController::class);
+        Route::post('families/{family}/members', [FamilyMemberController::class, 'store'])->name('families.members.store');
+        Route::patch('families/{family}/members/{member}', [FamilyMemberController::class, 'update'])->name('families.members.update');
+        Route::delete('families/{family}/members/{member}', [FamilyMemberController::class, 'destroy'])->name('families.members.destroy');
+
+        Route::resource('communities', CommunityController::class)->except('show');
+        Route::resource('clergy', ClergyAssignmentController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('change-requests', [ChangeRequestController::class, 'index'])->name('change-requests.index');
+        Route::patch('change-requests/{changeRequest}', [ChangeRequestController::class, 'update'])->name('change-requests.update');
+
+        Route::get('lookup/members', [LookupController::class, 'members'])->name('lookup.members');
+        Route::get('lookup/families', [LookupController::class, 'families'])->name('lookup.families');
 
         Route::resource('roles', RoleController::class)->except('show');
         Route::post('roles/{role}/duplicate', [RoleController::class, 'duplicate'])->name('roles.duplicate');

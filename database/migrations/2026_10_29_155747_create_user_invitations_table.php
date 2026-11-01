@@ -19,6 +19,7 @@ return new class extends Migration
             $table->json('permissions')->nullable();
             $table->foreignId('invited_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('member_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamp('expires_at');
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('revoked_at')->nullable();

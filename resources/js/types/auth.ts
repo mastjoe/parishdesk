@@ -15,6 +15,7 @@ export type Auth = {
     permissions: string[];
     isSuperAdmin: boolean;
     canAccessAdmin: boolean;
+    hasMember: boolean;
 };
 
 export type Passkey = {

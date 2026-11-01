@@ -78,23 +78,34 @@ test('appearance input is validated', function (array $payload, string $field) {
     'colour that could inject css' => [['theme' => 'custom', 'custom_color' => 'red;}body{display:none'], 'custom_color'],
 ]);
 
-test('a logo can be uploaded and replaced', function () {
-    Storage::fake('public');
+test('a logo can be uploaded, replaced and removed', function () {
+    Storage::fake('media');
     $user = User::factory()->withPermissions(Permission::SettingsAppearanceUpdate)->create();
 
     $this->actingAs($user)->post(route('admin.settings.appearance.update'), [
         'theme' => 'marian',
         'logo' => UploadedFile::fake()->image('logo.png', 256, 256),
     ]);
-    $first = ParishSetting::current()->logo_path;
+    $first = ParishSetting::current()->getFirstMedia('logo');
+
+    expect(ParishSetting::current()->logoUrl())->toBe($first->getUrl());
 
     $this->post(route('admin.settings.appearance.update'), [
         'theme' => 'marian',
         'logo' => UploadedFile::fake()->image('new.png', 256, 256),
     ]);
+    $second = ParishSetting::current()->getFirstMedia('logo');
 
-    Storage::disk('public')->assertMissing($first);
-    Storage::disk('public')->assertExists(ParishSetting::current()->logo_path);
+    // The cached logo URL follows the new file.
+    expect(ParishSetting::current()->logoUrl())->toBe($second->getUrl())
+        ->and(ParishSetting::current()->getMedia('logo'))->toHaveCount(1);
+    Storage::disk('media')->assertMissing($first->getPathRelativeToRoot());
+    Storage::disk('media')->assertExists($second->getPathRelativeToRoot());
+
+    $this->post(route('admin.settings.appearance.update'), ['theme' => 'marian', 'remove_logo' => true]);
+
+    expect(ParishSetting::current()->logoUrl())->toBeNull();
+    Storage::disk('media')->assertMissing($second->getPathRelativeToRoot());
 });
 
 test('finance defaults are validated and saved', function () {

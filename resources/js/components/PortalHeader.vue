@@ -12,13 +12,14 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
-import { portalNavigation } from '@/lib/portalNavigation';
+import { usePortalNavigation } from '@/lib/portalNavigation';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes/portal';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const { isCurrentOrParentUrl } = useCurrentUrl();
+const navigation = usePortalNavigation();
 </script>
 
 <template>
@@ -34,7 +35,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 
             <nav class="hidden items-center gap-1 md:flex" aria-label="Portal">
                 <Link
-                    v-for="item in portalNavigation"
+                    v-for="item in navigation"
                     :key="toUrl(item.href)"
                     :href="item.href"
                     prefetch

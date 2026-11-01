@@ -4,3 +4,4 @@ export * from './navigation';
 export * from './parish';
 export * from './table';
 export * from './ui';
+export * from './people';

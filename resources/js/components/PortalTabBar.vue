@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
-import { portalNavigation } from '@/lib/portalNavigation';
+import { usePortalNavigation } from '@/lib/portalNavigation';
 import { cn, toUrl } from '@/lib/utils';
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+const navigation = usePortalNavigation();
 </script>
 
 <template>
@@ -14,7 +15,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
     >
         <ul class="mx-auto flex max-w-md items-stretch justify-around">
             <li
-                v-for="item in portalNavigation"
+                v-for="item in navigation"
                 :key="toUrl(item.href)"
                 class="flex-1"
             >

@@ -39,6 +39,15 @@ class UserSeeder extends Seeder
         $officeManager = $this->role('Office Manager', 'blue', 'Manages staff accounts, the parish profile and the audit log.', [
             Permission::UsersView, Permission::UsersInvite, Permission::UsersUpdate, Permission::UsersRolesAssign,
             Permission::RolesView, Permission::SettingsParishUpdate, Permission::ActivityView,
+            Permission::MembersView, Permission::MembersCreate, Permission::MembersUpdate, Permission::MembersDelete,
+            Permission::MembersImport, Permission::MembersExport, Permission::MembersInvite, Permission::MembersChangeRequestsApprove,
+            Permission::FamiliesView, Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::FamiliesDelete,
+            Permission::CommunitiesView, Permission::CommunitiesManage, Permission::ClergyView, Permission::ClergyManage,
+        ]);
+
+        $recordsClerk = $this->role('Records Clerk', 'purple', 'Keeps the member and family register up to date.', [
+            Permission::MembersView, Permission::MembersCreate, Permission::MembersUpdate,
+            Permission::FamiliesView, Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::CommunitiesView,
         ]);
 
         $financeOfficer = $this->role('Finance Officer', 'green', 'Looks after finance settings and bank details.', [
@@ -47,12 +56,14 @@ class UserSeeder extends Seeder
 
         $auditor = $this->role('Auditor', 'teal', 'Read-only access to users, roles and the audit log.', [
             Permission::UsersView, Permission::RolesView, Permission::ActivityView,
+            Permission::MembersView, Permission::FamiliesView, Permission::CommunitiesView, Permission::ClergyView,
         ]);
 
         $this->user('Super Admin', 'superadmin@example.com', roles: [Role::SUPER_ADMIN]);
         $this->user('Grace Okafor', 'office@example.com', roles: [$officeManager]);
         $this->user('Peter Eze', 'finance@example.com', roles: [$financeOfficer]);
         $this->user('Mary Adeyemi', 'auditor@example.com', roles: [$auditor]);
+        $this->user('Rita Ugwu', 'clerk@example.com', roles: [$recordsClerk]);
 
         // A role plus an extra direct permission, to see "via role" locks.
         $this->user('Joseph Bello', 'secretary@example.com', roles: [$auditor], permissions: [Permission::UsersInvite]);

@@ -4,6 +4,7 @@ namespace App\Actions\Access;
 
 use App\Models\User;
 use App\Models\UserInvitation;
+use App\Notifications\MemberInvitation;
 use App\Notifications\StaffInvitation;
 use App\Support\Permissions\GrantGuard;
 use Illuminate\Support\Facades\Notification;
@@ -62,6 +63,8 @@ class InviteUser
             $invitation->update(['expires_at' => now()->addDays(UserInvitation::VALID_FOR_DAYS)]);
         }
 
-        Notification::route('mail', $invitation->email)->notify(new StaffInvitation($invitation));
+        Notification::route('mail', $invitation->email)->notify(
+            $invitation->isForMember() ? new MemberInvitation($invitation) : new StaffInvitation($invitation),
+        );
     }
 }
