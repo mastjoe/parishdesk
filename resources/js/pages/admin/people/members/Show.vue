@@ -2,11 +2,13 @@
 import { Head, Link, router, setLayoutProps, useForm } from '@inertiajs/vue3';
 import {
     Cake,
+    Check,
     Home,
     KeyRound,
     MailCheck,
     Pencil,
     Phone,
+    Plus,
     Trash2,
     UsersRound,
 } from '@lucide/vue';
@@ -27,15 +29,27 @@ import {
     memberStatusTone,
     optionLabel,
 } from '@/lib/people';
+import {
+    initiationSacraments,
+    sacramentIcon,
+    sacramentTile,
+    sacramentTone,
+} from '@/lib/sacraments';
+import { cn } from '@/lib/utils';
 import { index as changeRequestsIndex } from '@/routes/admin/change-requests';
 import { show as familyShow } from '@/routes/admin/families';
 import { destroy, edit, index, show } from '@/routes/admin/members';
 import { store as storeInvitation } from '@/routes/admin/members/invitation';
+import {
+    create as createSacrament,
+    show as sacramentShow,
+} from '@/routes/admin/sacraments';
 import type {
     MemberFields,
     MemberRow,
     MemberSummary,
     PeopleOptions,
+    SacramentRow,
 } from '@/types';
 
 type ChangeRequest = {
@@ -78,6 +92,7 @@ const props = defineProps<{
     };
     occupationLabels: Record<string, string>;
     changeRequests: ChangeRequest[];
+    sacraments: SacramentRow[];
     activity: {
         id: number;
         description: string;
@@ -92,6 +107,8 @@ const props = defineProps<{
         invite: boolean;
         reviewChanges: boolean;
         viewFamily: boolean;
+        viewSacraments: boolean;
+        recordSacraments: boolean;
     };
     invitationValidDays: number;
 }>();
@@ -155,6 +172,21 @@ const details = computed(() => [
             : null,
     },
 ]);
+
+const sacramentLabels: Record<string, string> = {
+    baptism: 'Baptism',
+    first_holy_communion: 'First Holy Communion',
+    confirmation: 'Confirmation',
+};
+
+/** The sacraments of initiation, with the entry for each one received. */
+const initiation = computed(() =>
+    initiationSacraments.map((type) => ({
+        type,
+        label: sacramentLabels[type],
+        record: props.sacraments.find((record) => record.type === type),
+    })),
+);
 
 const pendingChanges = computed(() =>
     props.changeRequests.filter((change) => change.status === 'pending'),
@@ -322,6 +354,13 @@ const valueOf = (field: string, value: string | null) => {
                             >{{ family.members.length + 1 }}</span
                         >
                     </TabsTrigger>
+                    <TabsTrigger v-if="can.viewSacraments" value="sacraments">
+                        Sacraments
+                        <span
+                            class="text-xs text-muted-foreground tabular-nums"
+                            >{{ sacraments.length }}</span
+                        >
+                    </TabsTrigger>
                     <TabsTrigger value="changes">
                         Change requests
                         <span
@@ -433,6 +472,181 @@ const valueOf = (field: string, value: string | null) => {
                         title="Not in a family"
                         description="Edit the member to place them in a family, or add them from the family's page."
                     />
+                </TabsContent>
+
+                <TabsContent
+                    v-if="can.viewSacraments"
+                    value="sacraments"
+                    class="flex flex-col gap-4"
+                >
+                    <ol class="grid gap-3 sm:grid-cols-3">
+                        <li
+                            v-for="step in initiation"
+                            :key="step.type"
+                            :class="
+                                cn(
+                                    'flex flex-col gap-3 rounded-xl border bg-card p-4',
+                                    !step.record &&
+                                        'border-dashed bg-transparent',
+                                )
+                            "
+                        >
+                            <div class="flex items-center justify-between">
+                                <span
+                                    :class="
+                                        cn(
+                                            'flex size-9 items-center justify-center rounded-lg',
+                                            step.record
+                                                ? sacramentTile[step.type]
+                                                : 'bg-muted text-muted-foreground',
+                                        )
+                                    "
+                                >
+                                    <component
+                                        :is="sacramentIcon[step.type]"
+                                        class="size-4"
+                                    />
+                                </span>
+                                <span
+                                    v-if="step.record"
+                                    class="flex size-5 items-center justify-center rounded-full bg-emerald-500 text-white"
+                                    ><Check class="size-3"
+                                /></span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium">
+                                    {{ step.label }}
+                                </p>
+                                <p
+                                    v-if="step.record"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{
+                                        formatPlainDate(step.record.receivedOn)
+                                    }}
+                                    ·
+                                    {{
+                                        step.record.elsewhere
+                                            ? step.record.place
+                                            : 'This parish'
+                                    }}
+                                </p>
+                                <p v-else class="text-xs text-muted-foreground">
+                                    Not recorded
+                                </p>
+                            </div>
+                            <Link
+                                v-if="step.record"
+                                :href="sacramentShow(step.record.id)"
+                                class="text-xs font-medium text-primary hover:underline"
+                                >View entry</Link
+                            >
+                            <Link
+                                v-else-if="can.recordSacraments"
+                                :href="
+                                    createSacrament({
+                                        query: {
+                                            type: step.type,
+                                            member: member.id,
+                                        },
+                                    })
+                                "
+                                class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                ><Plus class="size-3" /> Record</Link
+                            >
+                        </li>
+                    </ol>
+
+                    <section class="rounded-xl border bg-card">
+                        <header
+                            class="flex items-center justify-between gap-2 border-b px-5 py-3"
+                        >
+                            <h2 class="font-semibold">All register entries</h2>
+                            <Button
+                                v-if="can.recordSacraments"
+                                variant="outline"
+                                size="sm"
+                                as-child
+                            >
+                                <Link
+                                    :href="
+                                        createSacrament({
+                                            query: { member: member.id },
+                                        })
+                                    "
+                                >
+                                    <Plus class="size-4" /> Record sacrament
+                                </Link>
+                            </Button>
+                        </header>
+                        <ul v-if="sacraments.length" class="divide-y">
+                            <li v-for="record in sacraments" :key="record.id">
+                                <Link
+                                    :href="sacramentShow(record.id)"
+                                    class="flex items-center gap-3 px-5 py-3 hover:bg-muted/40"
+                                >
+                                    <span
+                                        :class="
+                                            cn(
+                                                'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                                                sacramentTile[record.type],
+                                            )
+                                        "
+                                    >
+                                        <component
+                                            :is="sacramentIcon[record.type]"
+                                            class="size-4"
+                                        />
+                                    </span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium">
+                                            {{ record.typeLabel }}
+                                            <span
+                                                v-if="record.spouseName"
+                                                class="font-normal text-muted-foreground"
+                                            >
+                                                ·
+                                                {{
+                                                    record.member?.id ===
+                                                    member.id
+                                                        ? record.spouseName
+                                                        : record.personName
+                                                }}</span
+                                            >
+                                        </p>
+                                        <p
+                                            class="truncate text-xs text-muted-foreground"
+                                        >
+                                            {{
+                                                formatPlainDate(
+                                                    record.receivedOn,
+                                                )
+                                            }}
+                                            ·
+                                            {{
+                                                record.elsewhere
+                                                    ? record.place
+                                                    : 'This parish'
+                                            }}
+                                        </p>
+                                    </div>
+                                    <StatusBadge
+                                        :tone="sacramentTone[record.type]"
+                                        class="hidden sm:inline-flex"
+                                        >{{
+                                            record.reference ?? 'No reference'
+                                        }}</StatusBadge
+                                    >
+                                </Link>
+                            </li>
+                        </ul>
+                        <p
+                            v-else
+                            class="px-5 py-6 text-sm text-muted-foreground"
+                        >
+                            No sacraments recorded for {{ member.name }} yet.
+                        </p>
+                    </section>
                 </TabsContent>
 
                 <TabsContent value="changes">

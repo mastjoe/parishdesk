@@ -8,6 +8,7 @@ enum PermissionGroup: string
     case Families = 'families';
     case Communities = 'communities';
     case Clergy = 'clergy';
+    case Sacraments = 'sacraments';
     case Users = 'users';
     case Roles = 'roles';
     case Settings = 'settings';
@@ -23,6 +24,7 @@ enum PermissionGroup: string
             self::Families => 'Families',
             self::Communities => 'Communities',
             self::Clergy => 'Clergy',
+            self::Sacraments => 'Sacraments',
             self::Users => 'Users & Invitations',
             self::Roles => 'Roles',
             self::Settings => 'Parish Settings',
@@ -40,6 +42,7 @@ enum PermissionGroup: string
             self::Families => 'Households and how members are related to each other.',
             self::Communities => 'Small Christian Communities, stations, outstations and zones.',
             self::Clergy => 'The priests and deacons who serve or have served the parish.',
+            self::Sacraments => 'The sacramental registers and their godparents, sponsors and witnesses.',
             self::Users => 'Staff accounts, invitations, and the access given to each user.',
             self::Roles => 'Creating roles and deciding which permissions each role holds.',
             self::Settings => 'Parish profile, branding, theme, and finance defaults.',

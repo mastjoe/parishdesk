@@ -43,11 +43,13 @@ class UserSeeder extends Seeder
             Permission::MembersImport, Permission::MembersExport, Permission::MembersInvite, Permission::MembersChangeRequestsApprove,
             Permission::FamiliesView, Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::FamiliesDelete,
             Permission::CommunitiesView, Permission::CommunitiesManage, Permission::ClergyView, Permission::ClergyManage,
+            Permission::SacramentsView, Permission::SacramentsCreate, Permission::SacramentsUpdate, Permission::SacramentsDelete,
         ]);
 
-        $recordsClerk = $this->role('Records Clerk', 'purple', 'Keeps the member and family register up to date.', [
+        $recordsClerk = $this->role('Records Clerk', 'purple', 'Keeps the member, family and sacramental registers up to date.', [
             Permission::MembersView, Permission::MembersCreate, Permission::MembersUpdate,
             Permission::FamiliesView, Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::CommunitiesView,
+            Permission::SacramentsView, Permission::SacramentsCreate, Permission::SacramentsUpdate,
         ]);
 
         $financeOfficer = $this->role('Finance Officer', 'green', 'Looks after finance settings and bank details.', [
@@ -57,6 +59,7 @@ class UserSeeder extends Seeder
         $auditor = $this->role('Auditor', 'teal', 'Read-only access to users, roles and the audit log.', [
             Permission::UsersView, Permission::RolesView, Permission::ActivityView,
             Permission::MembersView, Permission::FamiliesView, Permission::CommunitiesView, Permission::ClergyView,
+            Permission::SacramentsView,
         ]);
 
         $this->user('Super Admin', 'superadmin@example.com', roles: [Role::SUPER_ADMIN]);

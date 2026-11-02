@@ -165,6 +165,17 @@ class Member extends Model implements HasMedia
     }
 
     /**
+     * Get the sacraments the member received, not counting marriages in
+     * which they are the spouse (see SacramentRecord::scopeForMember()).
+     *
+     * @return HasMany<SacramentRecord, $this>
+     */
+    public function sacraments(): HasMany
+    {
+        return $this->hasMany(SacramentRecord::class);
+    }
+
+    /**
      * Get the latest portal invitation sent to the member.
      *
      * @return HasOne<UserInvitation, $this>

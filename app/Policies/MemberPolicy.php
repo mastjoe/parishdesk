@@ -26,13 +26,14 @@ class MemberPolicy
 
     /**
      * Determine whether the user can search members in a picker, which
-     * forms for families, communities and clergy need.
+     * forms for families, communities, clergy and sacraments need.
      */
     public function lookup(User $user): bool
     {
         return $user->canAny([
             Permission::MembersView, Permission::MembersCreate, Permission::MembersUpdate,
             Permission::FamiliesCreate, Permission::FamiliesUpdate, Permission::CommunitiesManage, Permission::ClergyManage,
+            Permission::SacramentsCreate, Permission::SacramentsUpdate,
         ]);
     }
 
