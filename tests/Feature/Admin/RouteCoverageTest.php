@@ -6,6 +6,7 @@ use App\Models\Family;
 use App\Models\Member;
 use App\Models\ProfileChangeRequest;
 use App\Models\Role;
+use App\Models\SacramentRecord;
 use App\Models\User;
 use App\Models\UserInvitation;
 use Illuminate\Routing\Route as RouteDefinition;
@@ -31,6 +32,7 @@ test('every admin route requires its own permission', function () {
         'community' => Community::factory()->create()->id,
         'clergy' => ClergyAssignment::factory()->create()->id,
         'changeRequest' => ProfileChangeRequest::factory()->for($member)->create()->id,
+        'sacrament' => SacramentRecord::factory()->create()->id,
     ];
     $parameters['member'] = $member->id;
 

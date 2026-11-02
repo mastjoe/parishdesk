@@ -32,6 +32,11 @@ enum Permission: string
     case ClergyView = 'clergy.view';
     case ClergyManage = 'clergy.manage';
 
+    case SacramentsView = 'sacraments.view';
+    case SacramentsCreate = 'sacraments.create';
+    case SacramentsUpdate = 'sacraments.update';
+    case SacramentsDelete = 'sacraments.delete';
+
     case UsersView = 'users.view';
     case UsersInvite = 'users.invite';
     case UsersUpdate = 'users.update';
@@ -79,6 +84,10 @@ enum Permission: string
             self::CommunitiesManage => 'Create, edit and delete communities',
             self::ClergyView => 'View clergy history',
             self::ClergyManage => 'Record clergy assignments',
+            self::SacramentsView => 'View sacramental registers',
+            self::SacramentsCreate => 'Record sacraments',
+            self::SacramentsUpdate => 'Correct register entries',
+            self::SacramentsDelete => 'Remove register entries',
             self::UsersView => 'View users',
             self::UsersInvite => 'Invite users',
             self::UsersUpdate => 'Edit and deactivate users',
@@ -117,6 +126,10 @@ enum Permission: string
             self::CommunitiesManage => 'Create, rename and delete communities and choose their leaders.',
             self::ClergyView => 'See the priests and deacons who have served the parish.',
             self::ClergyManage => 'Add, edit and remove clergy assignments.',
+            self::SacramentsView => 'Browse the baptism, communion, confirmation, marriage and other registers.',
+            self::SacramentsCreate => 'Write new entries in the sacramental registers.',
+            self::SacramentsUpdate => 'Change the details of an existing register entry.',
+            self::SacramentsDelete => 'Remove register entries. They are kept in the audit trail.',
             self::UsersView => 'See the list of staff users and their access.',
             self::UsersInvite => 'Send, resend and revoke staff invitations.',
             self::UsersUpdate => 'Change user details and activate or deactivate accounts.',

@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\People\MemberController;
 use App\Http\Controllers\Admin\People\MemberExportController;
 use App\Http\Controllers\Admin\People\MemberImportController;
 use App\Http\Controllers\Admin\People\MemberInvitationController;
+use App\Http\Controllers\Admin\Sacraments\SacramentRecordController;
 use App\Http\Controllers\Admin\Settings\AppearanceController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\ParishProfileController;
@@ -60,6 +61,8 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
 
         Route::resource('communities', CommunityController::class)->except('show');
         Route::resource('clergy', ClergyAssignmentController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::resource('sacraments', SacramentRecordController::class);
 
         Route::get('change-requests', [ChangeRequestController::class, 'index'])->name('change-requests.index');
         Route::patch('change-requests/{changeRequest}', [ChangeRequestController::class, 'update'])->name('change-requests.update');
