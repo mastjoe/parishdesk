@@ -9,11 +9,13 @@ use App\Http\Requests\Admin\People\SaveMemberRequest;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\ProfileChangeRequest;
+use App\Models\SacramentRecord;
 use App\Models\UserInvitation;
 use App\Support\People\MemberPresenter;
 use App\Support\People\MemberTable;
 use App\Support\People\Occupations;
 use App\Support\People\PeopleOptions;
+use App\Support\Sacraments\SacramentPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -152,6 +154,10 @@ class MemberController extends Controller
                     'causer' => $activity->causer?->getAttribute('name'),
                     'createdAt' => $activity->created_at?->toIso8601String(),
                 ]),
+            'sacraments' => $user->can('viewAny', SacramentRecord::class)
+                ? SacramentRecord::query()->forMember($member)->with('member.media')->oldest('received_on')->get()
+                    ->map(fn (SacramentRecord $record): array => SacramentPresenter::row($record))
+                : [],
             'options' => PeopleOptions::enums(),
             'can' => [
                 'update' => $user->can('update', $member),
@@ -159,6 +165,8 @@ class MemberController extends Controller
                 'invite' => $user->can('invite', $member),
                 'reviewChanges' => $user->can('viewAny', ProfileChangeRequest::class),
                 'viewFamily' => $user->can('viewAny', Family::class),
+                'viewSacraments' => $user->can('viewAny', SacramentRecord::class),
+                'recordSacraments' => $user->can('create', SacramentRecord::class),
             ],
             'invitationValidDays' => UserInvitation::VALID_FOR_DAYS,
         ]);

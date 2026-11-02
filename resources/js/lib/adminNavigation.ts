@@ -1,4 +1,5 @@
 import {
+    BookMarked,
     Cake,
     Church,
     Cross,
@@ -21,6 +22,7 @@ import { index as communitiesIndex } from '@/routes/admin/communities';
 import { index as familiesIndex } from '@/routes/admin/families';
 import { celebrations, index as membersIndex } from '@/routes/admin/members';
 import { index as rolesIndex } from '@/routes/admin/roles';
+import { index as sacramentsIndex } from '@/routes/admin/sacraments';
 import { edit as appearanceEdit } from '@/routes/admin/settings/appearance';
 import { edit as financeEdit } from '@/routes/admin/settings/finance';
 import { edit as parishEdit } from '@/routes/admin/settings/parish';
@@ -74,6 +76,17 @@ export const adminNavigation: NavGroup[] = [
                 href: changeRequestsIndex(),
                 icon: FileClock,
                 permissions: ['members.change-requests.approve'],
+            },
+        ],
+    },
+    {
+        title: 'Registers',
+        items: [
+            {
+                title: 'Sacraments',
+                href: sacramentsIndex(),
+                icon: BookMarked,
+                permissions: ['sacraments.view'],
             },
         ],
     },
