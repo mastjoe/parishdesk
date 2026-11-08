@@ -6,6 +6,11 @@ use App\Http\Controllers\Admin\Access\RoleController;
 use App\Http\Controllers\Admin\Access\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Marriages\BannsObjectionController;
+use App\Http\Controllers\Admin\Marriages\BannsPublicationController;
+use App\Http\Controllers\Admin\Marriages\MarriageApplicationController;
+use App\Http\Controllers\Admin\Marriages\MarriageStageController;
+use App\Http\Controllers\Admin\Marriages\WeddingController;
 use App\Http\Controllers\Admin\People\CelebrationController;
 use App\Http\Controllers\Admin\People\ChangeRequestController;
 use App\Http\Controllers\Admin\People\ClergyAssignmentController;
@@ -63,6 +68,19 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::resource('clergy', ClergyAssignmentController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::resource('sacraments', SacramentRecordController::class);
+
+        Route::resource('marriages', MarriageApplicationController::class);
+        Route::scopeBindings()->prefix('marriages/{marriage}')->name('marriages.')->group(function () {
+            Route::put('checks', [MarriageStageController::class, 'checks'])->name('checks.update');
+            Route::post('verification', [MarriageStageController::class, 'verify'])->name('verify');
+            Route::post('clearance', [MarriageStageController::class, 'clear'])->name('clear');
+            Route::post('withdrawal', [MarriageStageController::class, 'withdraw'])->name('withdraw');
+            Route::post('banns', [BannsPublicationController::class, 'store'])->name('banns.store');
+            Route::delete('banns/{publication}', [BannsPublicationController::class, 'destroy'])->name('banns.destroy');
+            Route::post('objections', [BannsObjectionController::class, 'store'])->name('objections.store');
+            Route::patch('objections/{objection}', [BannsObjectionController::class, 'update'])->name('objections.update');
+            Route::post('wedding', [WeddingController::class, 'store'])->name('wedding.store');
+        });
 
         Route::get('change-requests', [ChangeRequestController::class, 'index'])->name('change-requests.index');
         Route::patch('change-requests/{changeRequest}', [ChangeRequestController::class, 'update'])->name('change-requests.update');

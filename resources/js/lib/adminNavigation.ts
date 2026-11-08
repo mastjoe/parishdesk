@@ -3,6 +3,7 @@ import {
     Cake,
     Church,
     Cross,
+    HeartHandshake,
     FileClock,
     History,
     House,
@@ -20,6 +21,7 @@ import { index as changeRequestsIndex } from '@/routes/admin/change-requests';
 import { index as clergyIndex } from '@/routes/admin/clergy';
 import { index as communitiesIndex } from '@/routes/admin/communities';
 import { index as familiesIndex } from '@/routes/admin/families';
+import { index as marriagesIndex } from '@/routes/admin/marriages';
 import { celebrations, index as membersIndex } from '@/routes/admin/members';
 import { index as rolesIndex } from '@/routes/admin/roles';
 import { index as sacramentsIndex } from '@/routes/admin/sacraments';
@@ -87,6 +89,12 @@ export const adminNavigation: NavGroup[] = [
                 href: sacramentsIndex(),
                 icon: BookMarked,
                 permissions: ['sacraments.view'],
+            },
+            {
+                title: 'Marriages & banns',
+                href: marriagesIndex(),
+                icon: HeartHandshake,
+                permissions: ['marriages.view'],
             },
         ],
     },

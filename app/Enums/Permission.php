@@ -37,6 +37,11 @@ enum Permission: string
     case SacramentsUpdate = 'sacraments.update';
     case SacramentsDelete = 'sacraments.delete';
 
+    case MarriagesView = 'marriages.view';
+    case MarriagesCreate = 'marriages.create';
+    case MarriagesUpdate = 'marriages.update';
+    case MarriagesDelete = 'marriages.delete';
+
     case UsersView = 'users.view';
     case UsersInvite = 'users.invite';
     case UsersUpdate = 'users.update';
@@ -88,6 +93,10 @@ enum Permission: string
             self::SacramentsCreate => 'Record sacraments',
             self::SacramentsUpdate => 'Correct register entries',
             self::SacramentsDelete => 'Remove register entries',
+            self::MarriagesView => 'View marriage applications',
+            self::MarriagesCreate => 'Open marriage applications',
+            self::MarriagesUpdate => 'Manage marriage applications and banns',
+            self::MarriagesDelete => 'Remove marriage applications',
             self::UsersView => 'View users',
             self::UsersInvite => 'Invite users',
             self::UsersUpdate => 'Edit and deactivate users',
@@ -130,6 +139,10 @@ enum Permission: string
             self::SacramentsCreate => 'Write new entries in the sacramental registers.',
             self::SacramentsUpdate => 'Change the details of an existing register entry.',
             self::SacramentsDelete => 'Remove register entries. They are kept in the audit trail.',
+            self::MarriagesView => 'Browse marriage applications, their banns and any objections.',
+            self::MarriagesCreate => 'Open a marriage application for a couple.',
+            self::MarriagesUpdate => 'Check documents, publish the banns, handle objections and record the wedding.',
+            self::MarriagesDelete => 'Remove applications opened by mistake. They are kept in the audit trail.',
             self::UsersView => 'See the list of staff users and their access.',
             self::UsersInvite => 'Send, resend and revoke staff invitations.',
             self::UsersUpdate => 'Change user details and activate or deactivate accounts.',

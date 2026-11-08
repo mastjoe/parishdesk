@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         $sync->handle();
 
         if (! app()->isProduction()) {
-            $this->call([UserSeeder::class, PeopleSeeder::class, SacramentSeeder::class]);
+            $this->call([UserSeeder::class, PeopleSeeder::class, SacramentSeeder::class, MarriageSeeder::class]);
         }
     }
 }

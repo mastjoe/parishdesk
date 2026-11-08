@@ -6,3 +6,4 @@ export * from './table';
 export * from './ui';
 export * from './people';
 export * from './sacraments';
+export * from './marriages';

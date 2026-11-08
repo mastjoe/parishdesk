@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\BannsObjection;
 use App\Models\ClergyAssignment;
 use App\Models\Community;
 use App\Models\Family;
+use App\Models\MarriageApplication;
 use App\Models\Member;
 use App\Models\ProfileChangeRequest;
 use App\Models\Role;
@@ -33,7 +35,11 @@ test('every admin route requires its own permission', function () {
         'clergy' => ClergyAssignment::factory()->create()->id,
         'changeRequest' => ProfileChangeRequest::factory()->for($member)->create()->id,
         'sacrament' => SacramentRecord::factory()->create()->id,
+        'marriage' => $marriage = MarriageApplication::factory()->withBanns(1)->create(),
+        'objection' => BannsObjection::factory()->for($marriage, 'application')->create()->id,
     ];
+    $parameters['publication'] = $marriage->publications()->sole()->id;
+    $parameters['marriage'] = $marriage->id;
     $parameters['member'] = $member->id;
 
     $routes = collect(Route::getRoutes()->getRoutes())
