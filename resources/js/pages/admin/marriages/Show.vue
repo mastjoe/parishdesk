@@ -12,6 +12,7 @@ import {
     BookMarked,
     CalendarDays,
     Check,
+    Church,
     HeartHandshake,
     Megaphone,
     Pencil,
@@ -296,6 +297,12 @@ const remove = () => {
                             {{
                                 longDate(application.proposedDate) ??
                                 'No date yet'
+                            }}</span
+                        >
+                        <span class="inline-flex items-center gap-1"
+                            ><Church class="size-3.5" />
+                            {{
+                                application.weddingParish ?? 'This parish'
                             }}</span
                         >
                         <span

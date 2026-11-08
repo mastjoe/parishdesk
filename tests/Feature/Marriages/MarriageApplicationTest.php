@@ -56,6 +56,7 @@ test('an application is opened with its own number', function () {
         ->and($application->groom->is($groom))->toBeTrue()
         ->and($application->groom_name)->toBe('Chidi Okeke')
         ->and($application->bride_parish)->toBe('Holy Ghost Cathedral, Enugu')
+        ->and($application->wedding_parish)->toBeNull()
         ->and($application->created_by)->toBe($user->id);
 });
 
@@ -297,12 +298,30 @@ test('recording the wedding writes it in the marriage register', function () {
         ->and($record->spouse_member_id)->toBe($bride->id)
         ->and($record->spouse_name)->toBe($bride->full_name)
         ->and($record->received_on->toDateString())->toBe('2026-10-31')
+        ->and($record->elsewhere)->toBeFalse()
         ->and($record->recorded_by)->toBe($user->id)
         ->and($record->sponsors->pluck('name')->all())->toBe(['Paul Nnaji'])
         ->and($application->status)->toBe(MarriageStatus::Married)
         ->and($application->matrimony_record_id)->toBe($record->id)
         ->and($groom->fresh()->marital_status)->toBe(MaritalStatus::Married)
         ->and($bride->fresh()->wedding_date->toDateString())->toBe('2026-10-31');
+});
+
+test('a wedding in another parish is written in the register as held there', function () {
+    $this->travelTo('2026-11-01');
+    $application = MarriageApplication::factory()->cleared()->create(['wedding_parish' => 'Holy Ghost Cathedral, Enugu']);
+
+    $this->actingAs(marriageOfficer(Permission::SacramentsCreate))
+        ->post(route('admin.marriages.wedding.store', $application), [
+            'received_on' => '2026-10-31',
+            'minister' => 'Rev. Fr. Michael Eze',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $record = SacramentRecord::query()->sole();
+
+    expect($record->elsewhere)->toBeTrue()
+        ->and($record->place)->toBe('Holy Ghost Cathedral, Enugu');
 });
 
 test('the wedding is recorded only for a cleared couple', function () {

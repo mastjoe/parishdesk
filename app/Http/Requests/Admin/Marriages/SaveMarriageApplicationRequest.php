@@ -37,6 +37,7 @@ class SaveMarriageApplicationRequest extends FormRequest
             'bride_name' => $squish($this->input('bride_name')),
             'groom_parish' => $squish($this->input('groom_parish')),
             'bride_parish' => $squish($this->input('bride_parish')),
+            'wedding_parish' => $squish($this->input('wedding_parish')),
             'officiant' => $squish($this->input('officiant')),
         ]);
     }
@@ -56,6 +57,7 @@ class SaveMarriageApplicationRequest extends FormRequest
             'bride_name' => ['required', 'string', 'max:255'],
             'bride_parish' => ['nullable', 'string', 'max:255'],
             'proposed_date' => ['nullable', 'date'],
+            'wedding_parish' => ['nullable', 'string', 'max:255'],
             'officiant' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ];

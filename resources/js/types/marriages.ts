@@ -49,6 +49,7 @@ export type MarriageSteps = {
 export type MarriageDetail = MarriageRow & {
     groomParish: string | null;
     brideParish: string | null;
+    weddingParish: string | null;
     officiant: string | null;
     notes: string | null;
     checks: MarriageCheckItem[];
@@ -73,6 +74,7 @@ export type MarriageFields = {
     bride_name: string;
     bride_parish: string | null;
     proposed_date: string | null;
+    wedding_parish: string | null;
     officiant: string | null;
     notes: string | null;
 };

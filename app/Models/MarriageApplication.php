@@ -35,6 +35,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $bride_parish The bride's parish when it is not this one
  * @property MarriageStatus $status
  * @property Carbon|null $proposed_date
+ * @property string|null $wedding_parish The parish where the wedding will be held when it is not this one
  * @property string|null $officiant
  * @property list<string>|null $checks The MarriageCheck values that are done
  * @property CarbonImmutable|null $documents_verified_at
@@ -50,7 +51,7 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 #[Fillable([
     'groom_member_id', 'groom_name', 'groom_parish', 'bride_member_id', 'bride_name', 'bride_parish',
-    'proposed_date', 'officiant', 'notes',
+    'proposed_date', 'wedding_parish', 'officiant', 'notes',
 ])]
 class MarriageApplication extends Model
 {

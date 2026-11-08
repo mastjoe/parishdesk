@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
-import { CalendarDays, HeartHandshake, UserRound } from '@lucide/vue';
+import { CalendarDays, Church, HeartHandshake, UserRound } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
@@ -35,6 +35,7 @@ const form = useForm({
     bride_name: fields?.bride_name ?? (startsAsBride ? props.member!.name : ''),
     bride_parish: fields?.bride_parish ?? '',
     proposed_date: fields?.proposed_date ?? '',
+    wedding_parish: fields?.wedding_parish ?? '',
     officiant: fields?.officiant ?? '',
     notes: fields?.notes ?? '',
 });
@@ -141,8 +142,8 @@ const submit = () => {
                 <header class="border-b px-5 py-4">
                     <h2 class="font-semibold">The wedding</h2>
                     <p class="text-sm text-muted-foreground">
-                        The date the couple is hoping for and the priest who
-                        will witness the marriage.
+                        The date the couple is hoping for, where the wedding
+                        will be held and the priest who will witness it.
                     </p>
                 </header>
                 <div class="grid gap-4 p-5 sm:grid-cols-2">
@@ -154,6 +155,15 @@ const submit = () => {
                             type="date"
                         />
                         <InputError :message="form.errors.proposed_date" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="marriage-wedding-parish">Parish</Label>
+                        <Input
+                            id="marriage-wedding-parish"
+                            v-model="form.wedding_parish"
+                            placeholder="Leave empty for this parish"
+                        />
+                        <InputError :message="form.errors.wedding_parish" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="marriage-officiant">Officiant</Label>
@@ -217,6 +227,12 @@ const submit = () => {
                                       year: 'numeric',
                                   })
                                 : 'Date not set'
+                        }}</span>
+                    </li>
+                    <li class="flex items-center gap-2 text-muted-foreground">
+                        <Church class="size-4 shrink-0" />
+                        <span class="truncate">{{
+                            form.wedding_parish || 'This parish'
                         }}</span>
                     </li>
                     <li class="flex items-center gap-2 text-muted-foreground">

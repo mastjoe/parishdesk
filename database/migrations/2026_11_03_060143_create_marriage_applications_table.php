@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('bride_parish')->nullable();
             $table->string('status', 20)->default('applied');
             $table->date('proposed_date')->nullable();
+            $table->string('wedding_parish')->nullable();
             $table->string('officiant')->nullable();
             $table->json('checks')->nullable();
             $table->timestamp('documents_verified_at')->nullable();

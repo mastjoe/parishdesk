@@ -45,8 +45,8 @@ class RecordWedding
                 'person_name' => $application->groom_name,
                 'gender' => $application->groom->gender ?? Gender::Male,
                 'date_of_birth' => $application->groom?->date_of_birth,
-                'elsewhere' => false,
-                'place' => null,
+                'elsewhere' => $application->wedding_parish !== null,
+                'place' => $application->wedding_parish,
                 'spouse_member_id' => $application->bride_member_id,
                 'spouse_name' => $application->bride_name,
             ], $witnesses, recordedBy: $recordedBy);

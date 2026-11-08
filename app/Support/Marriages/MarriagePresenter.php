@@ -50,6 +50,7 @@ class MarriagePresenter
             ...self::row($application),
             'groomParish' => $application->groom_parish,
             'brideParish' => $application->bride_parish,
+            'weddingParish' => $application->wedding_parish,
             'officiant' => $application->officiant,
             'notes' => $application->notes,
             'checks' => array_map(fn (MarriageCheck $check): array => [
@@ -107,6 +108,7 @@ class MarriagePresenter
             'bride_name' => $application->bride_name,
             'bride_parish' => $application->bride_parish,
             'proposed_date' => $application->proposed_date?->toDateString(),
+            'wedding_parish' => $application->wedding_parish,
             'officiant' => $application->officiant,
             'notes' => $application->notes,
         ];
