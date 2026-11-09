@@ -118,6 +118,7 @@ class MarriageApplicationController extends Controller
             'application' => [
                 ...MarriagePresenter::row($marriage),
                 'fields' => MarriagePresenter::form($marriage),
+                'parentMembers' => MarriagePresenter::parentMembers($marriage),
             ],
         ]);
     }

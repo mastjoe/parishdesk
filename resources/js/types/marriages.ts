@@ -46,9 +46,23 @@ export type MarriageSteps = {
     marry: boolean;
 };
 
+export type MarriageSide = 'groom' | 'bride';
+
+export type MarriageParent = 'father' | 'mother';
+
+/** The names of one partner's father and mother. */
+export type MarriageParents = Record<MarriageParent, string | null>;
+
+/** The parents picked from the member register, keyed by form field. */
+export type MarriageParentMembers = Record<
+    `${MarriageSide}_${MarriageParent}`,
+    MemberSummary | null
+>;
+
 export type MarriageDetail = MarriageRow & {
     groomParish: string | null;
     brideParish: string | null;
+    parents: Record<MarriageSide, MarriageParents>;
     weddingParish: string | null;
     officiant: string | null;
     notes: string | null;
@@ -73,6 +87,14 @@ export type MarriageFields = {
     bride_member_id: number | null;
     bride_name: string;
     bride_parish: string | null;
+    groom_father_member_id: number | null;
+    groom_father_name: string | null;
+    groom_mother_member_id: number | null;
+    groom_mother_name: string | null;
+    bride_father_member_id: number | null;
+    bride_father_name: string | null;
+    bride_mother_member_id: number | null;
+    bride_mother_name: string | null;
     proposed_date: string | null;
     wedding_parish: string | null;
     officiant: string | null;

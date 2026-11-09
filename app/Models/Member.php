@@ -145,6 +145,33 @@ class Member extends Model implements HasMedia
     }
 
     /**
+     * Get the member's father and mother from their family.
+     *
+     * A child's parents are the father and mother of their family; a
+     * parent's own parents are not in the family, so none are found.
+     *
+     * @return array{father: Member|null, mother: Member|null}
+     */
+    public function familyParents(): array
+    {
+        if ($this->family === null || ! in_array($this->family_role, [FamilyRole::Child, FamilyRole::Dependent], true)) {
+            return ['father' => null, 'mother' => null];
+        }
+
+        $parents = $this->family->members()
+            ->with('media')
+            ->whereIn('family_role', [FamilyRole::Father, FamilyRole::Mother])
+            ->whereKeyNot($this->id)
+            ->get()
+            ->keyBy(fn (Member $parent): string => $parent->family_role->value ?? '');
+
+        return [
+            'father' => $parents->get(FamilyRole::Father->value),
+            'mother' => $parents->get(FamilyRole::Mother->value),
+        ];
+    }
+
+    /**
      * Get the portal account linked to the member.
      *
      * @return BelongsTo<User, $this>

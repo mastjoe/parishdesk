@@ -6,6 +6,7 @@ use App\Enums\MarriageCheck;
 use App\Models\BannsObjection;
 use App\Models\BannsPublication;
 use App\Models\MarriageApplication;
+use App\Models\Member;
 use App\Support\People\MemberPresenter;
 
 /**
@@ -50,6 +51,10 @@ class MarriagePresenter
             ...self::row($application),
             'groomParish' => $application->groom_parish,
             'brideParish' => $application->bride_parish,
+            'parents' => [
+                'groom' => ['father' => $application->groom_father_name, 'mother' => $application->groom_mother_name],
+                'bride' => ['father' => $application->bride_father_name, 'mother' => $application->bride_mother_name],
+            ],
             'weddingParish' => $application->wedding_parish,
             'officiant' => $application->officiant,
             'notes' => $application->notes,
@@ -107,10 +112,37 @@ class MarriagePresenter
             'bride_member_id' => $application->bride_member_id,
             'bride_name' => $application->bride_name,
             'bride_parish' => $application->bride_parish,
+            'groom_father_member_id' => $application->groom_father_member_id,
+            'groom_father_name' => $application->groom_father_name,
+            'groom_mother_member_id' => $application->groom_mother_member_id,
+            'groom_mother_name' => $application->groom_mother_name,
+            'bride_father_member_id' => $application->bride_father_member_id,
+            'bride_father_name' => $application->bride_father_name,
+            'bride_mother_member_id' => $application->bride_mother_member_id,
+            'bride_mother_name' => $application->bride_mother_name,
             'proposed_date' => $application->proposed_date?->toDateString(),
             'wedding_parish' => $application->wedding_parish,
             'officiant' => $application->officiant,
             'notes' => $application->notes,
         ];
+    }
+
+    /**
+     * Get the parents picked from the member register, keyed by their form
+     * field, so the form can show who is picked before any search.
+     *
+     * @return array<string, array<string, mixed>|null>
+     */
+    public static function parentMembers(MarriageApplication $application): array
+    {
+        $keys = ['groom_father', 'groom_mother', 'bride_father', 'bride_mother'];
+        $ids = array_filter(array_map(fn (string $key): ?int => $application->getAttribute("{$key}_member_id"), $keys));
+        $members = Member::query()->withTrashed()->with('media')->findMany($ids)->keyBy('id');
+
+        return collect($keys)->mapWithKeys(fn (string $key): array => [
+            $key => ($member = $members->get($application->getAttribute("{$key}_member_id"))) !== null
+                ? MemberPresenter::summary($member)
+                : null,
+        ])->all();
     }
 }

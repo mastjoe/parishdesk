@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::patch('change-requests/{changeRequest}', [ChangeRequestController::class, 'update'])->name('change-requests.update');
 
         Route::get('lookup/members', [LookupController::class, 'members'])->name('lookup.members');
+        Route::get('lookup/members/{member}/parents', [LookupController::class, 'parents'])->name('lookup.parents');
         Route::get('lookup/families', [LookupController::class, 'families'])->name('lookup.families');
 
         Route::resource('roles', RoleController::class)->except('show');

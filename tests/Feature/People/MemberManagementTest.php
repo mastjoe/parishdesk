@@ -234,6 +234,7 @@ test('member pickers can be used by anyone who needs to choose a member', functi
 })->with([
     'communities manager' => [Permission::CommunitiesManage, 200],
     'clergy manager' => [Permission::ClergyManage, 200],
+    'marriage officer' => [Permission::MarriagesCreate, 200],
     'role manager' => [Permission::RolesUpdate, 403],
 ]);
 

@@ -65,7 +65,23 @@ import {
 } from '@/routes/admin/marriages/objections';
 import { show as memberShow } from '@/routes/admin/members';
 import { show as sacramentShow } from '@/routes/admin/sacraments';
-import type { BannsObjection, MarriageDetail, MemberSummary } from '@/types';
+import type {
+    BannsObjection,
+    MarriageDetail,
+    MarriageParents,
+    MemberSummary,
+} from '@/types';
+
+/**
+ * Describe a partner's parents, e.g. "Father: John Okeke · Mother: Ada Okeke".
+ */
+const parentsLine = (parents: MarriageParents): string =>
+    [
+        parents.father && `Father: ${parents.father}`,
+        parents.mother && `Mother: ${parents.mother}`,
+    ]
+        .filter(Boolean)
+        .join(' · ');
 
 const props = defineProps<{
     application: MarriageDetail;
@@ -688,6 +704,15 @@ const remove = () => {
                                           'Parish not recorded')
                                 }}
                             </dd>
+                            <dd
+                                v-if="
+                                    application.parents.groom.father ||
+                                    application.parents.groom.mother
+                                "
+                                class="mt-1 text-xs text-muted-foreground"
+                            >
+                                {{ parentsLine(application.parents.groom) }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-xs text-muted-foreground">Bride</dt>
@@ -701,6 +726,15 @@ const remove = () => {
                                         : (application.brideParish ??
                                           'Parish not recorded')
                                 }}
+                            </dd>
+                            <dd
+                                v-if="
+                                    application.parents.bride.father ||
+                                    application.parents.bride.mother
+                                "
+                                class="mt-1 text-xs text-muted-foreground"
+                            >
+                                {{ parentsLine(application.parents.bride) }}
                             </dd>
                         </div>
                         <div v-if="application.notes">

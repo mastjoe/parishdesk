@@ -37,6 +37,10 @@ class SaveMarriageApplicationRequest extends FormRequest
             'bride_name' => $squish($this->input('bride_name')),
             'groom_parish' => $squish($this->input('groom_parish')),
             'bride_parish' => $squish($this->input('bride_parish')),
+            'groom_father_name' => $squish($this->input('groom_father_name')),
+            'groom_mother_name' => $squish($this->input('groom_mother_name')),
+            'bride_father_name' => $squish($this->input('bride_father_name')),
+            'bride_mother_name' => $squish($this->input('bride_mother_name')),
             'wedding_parish' => $squish($this->input('wedding_parish')),
             'officiant' => $squish($this->input('officiant')),
         ]);
@@ -56,6 +60,8 @@ class SaveMarriageApplicationRequest extends FormRequest
             'bride_member_id' => ['nullable', 'integer', Rule::exists('members', 'id')->withoutTrashed()],
             'bride_name' => ['required', 'string', 'max:255'],
             'bride_parish' => ['nullable', 'string', 'max:255'],
+            ...$this->parentRules('groom'),
+            ...$this->parentRules('bride'),
             'proposed_date' => ['nullable', 'date'],
             'wedding_parish' => ['nullable', 'string', 'max:255'],
             'officiant' => ['nullable', 'string', 'max:255'],
@@ -64,10 +70,29 @@ class SaveMarriageApplicationRequest extends FormRequest
     }
 
     /**
+     * Get the rules for one partner's father and mother, each picked from
+     * the member register or named.
+     *
+     * @return array<string, array<mixed>>
+     */
+    private function parentRules(string $side): array
+    {
+        $rules = [];
+
+        foreach (['father', 'mother'] as $parent) {
+            $rules["{$side}_{$parent}_member_id"] = ['nullable', 'integer', "different:{$side}_member_id", Rule::exists('members', 'id')->withoutTrashed()];
+            $rules["{$side}_{$parent}_name"] = ['nullable', "required_with:{$side}_{$parent}_member_id", 'string', 'max:255'];
+        }
+
+        return $rules;
+    }
+
+    /**
      * Get the "after" validation callables for the request.
      *
-     * A member can only be the groom if he is a man and the bride if she is
-     * a woman, and can only be in one open application at a time.
+     * A member can only be the groom or a father if he is a man and the bride
+     * or a mother if she is a woman, and can only be in one open application
+     * at a time.
      *
      * @return array<int, callable(Validator): void>
      */
@@ -107,6 +132,26 @@ class SaveMarriageApplicationRequest extends FormRequest
                     }
                 }
             },
+            function (Validator $validator): void {
+                foreach (['groom', 'bride'] as $side) {
+                    foreach (['father' => Gender::Male, 'mother' => Gender::Female] as $parent => $gender) {
+                        $key = "{$side}_{$parent}_member_id";
+
+                        if ($validator->errors()->has($key) || ! $this->filled($key)) {
+                            continue;
+                        }
+
+                        $member = Member::query()->find($this->integer($key));
+
+                        if ($member !== null && $member->gender !== $gender) {
+                            $validator->errors()->add($key, __(':name is not recorded as a :gender in the member register.', [
+                                'name' => $member->full_name,
+                                'gender' => $gender === Gender::Male ? 'man' : 'woman',
+                            ]));
+                        }
+                    }
+                }
+            },
         ];
     }
 
@@ -119,6 +164,8 @@ class SaveMarriageApplicationRequest extends FormRequest
     {
         return [
             'groom_member_id.different' => __('The groom and the bride must be different people.'),
+            '*_father_member_id.different' => __('A partner cannot be their own father.'),
+            '*_mother_member_id.different' => __('A partner cannot be their own mother.'),
         ];
     }
 
@@ -136,6 +183,10 @@ class SaveMarriageApplicationRequest extends FormRequest
             'bride_member_id' => 'bride',
             'bride_name' => 'bride\'s name',
             'bride_parish' => 'bride\'s parish',
+            'groom_father_name' => 'groom\'s father\'s name',
+            'groom_mother_name' => 'groom\'s mother\'s name',
+            'bride_father_name' => 'bride\'s father\'s name',
+            'bride_mother_name' => 'bride\'s mother\'s name',
         ];
     }
 

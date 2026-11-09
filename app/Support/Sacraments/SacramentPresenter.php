@@ -2,7 +2,6 @@
 
 namespace App\Support\Sacraments;
 
-use App\Enums\FamilyRole;
 use App\Enums\HolyOrder;
 use App\Models\Member;
 use App\Models\SacramentRecord;
@@ -116,21 +115,13 @@ class SacramentPresenter
      */
     public static function person(Member $member): array
     {
-        $parents = $member->family?->members()
-            ->whereIn('family_role', [FamilyRole::Father, FamilyRole::Mother])
-            ->whereKeyNot($member->id)
-            ->get()
-            ->keyBy(fn (Member $parent): string => $parent->family_role->value ?? '');
-
-        // A child's parents are the father and mother of their family; a
-        // parent's own parents are not in the family, so nothing is copied.
-        $isChild = in_array($member->family_role, [FamilyRole::Child, FamilyRole::Dependent], true);
+        $parents = $member->familyParents();
 
         return [
             ...MemberPresenter::summary($member),
             'dateOfBirth' => $member->date_of_birth?->toDateString(),
-            'fatherName' => $isChild ? $parents?->get(FamilyRole::Father->value)?->full_name : null,
-            'motherName' => $isChild ? $parents?->get(FamilyRole::Mother->value)?->full_name : null,
+            'fatherName' => $parents['father']?->full_name,
+            'motherName' => $parents['mother']?->full_name,
         ];
     }
 }

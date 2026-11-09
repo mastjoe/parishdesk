@@ -37,6 +37,22 @@ class LookupController extends Controller
     }
 
     /**
+     * Get a member's father and mother from their family, so a form can
+     * fill them in when the member is picked.
+     */
+    public function parents(Member $member): JsonResponse
+    {
+        Gate::authorize('lookup', Member::class);
+
+        $parents = $member->familyParents();
+
+        return response()->json(['data' => [
+            'father' => $parents['father'] !== null ? MemberPresenter::summary($parents['father']) : null,
+            'mother' => $parents['mother'] !== null ? MemberPresenter::summary($parents['mother']) : null,
+        ]]);
+    }
+
+    /**
      * Find families by name or address.
      */
     public function families(Request $request): JsonResponse

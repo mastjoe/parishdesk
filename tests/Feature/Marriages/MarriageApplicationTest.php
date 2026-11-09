@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\FamilyRole;
 use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MarriageCheck;
@@ -7,6 +8,7 @@ use App\Enums\MarriageStatus;
 use App\Enums\Permission;
 use App\Enums\SacramentType;
 use App\Models\BannsObjection;
+use App\Models\Family;
 use App\Models\MarriageApplication;
 use App\Models\Member;
 use App\Models\SacramentRecord;
@@ -77,6 +79,61 @@ test('the groom and the bride must be different people', function () {
     $this->actingAs(marriageOfficer())
         ->post(route('admin.marriages.store'), marriageApplication(['groom_member_id' => $member->id, 'bride_member_id' => $member->id]))
         ->assertSessionHasErrors(['groom_member_id' => 'The groom and the bride must be different people.']);
+});
+
+test('each partner\'s parents are kept, picked from the register or named', function () {
+    $father = Member::factory()->create(['gender' => Gender::Male]);
+
+    $this->actingAs(marriageOfficer())->post(route('admin.marriages.store'), marriageApplication([
+        'groom_father_member_id' => $father->id,
+        'groom_father_name' => $father->full_name,
+        'groom_mother_name' => '  Ada   Okeke ',
+        'bride_father_name' => 'Emeka Eze',
+    ]))->assertSessionHasNoErrors();
+
+    $application = MarriageApplication::query()->sole();
+
+    expect($application->groom_father_member_id)->toBe($father->id)
+        ->and($application->groom_father_name)->toBe($father->full_name)
+        ->and($application->groom_mother_name)->toBe('Ada Okeke')
+        ->and($application->bride_father_name)->toBe('Emeka Eze')
+        ->and($application->bride_mother_name)->toBeNull();
+});
+
+test('a parent from the register must be the right gender and not the partner', function () {
+    $groom = Member::factory()->create(['gender' => Gender::Male]);
+    $woman = Member::factory()->create(['gender' => Gender::Female]);
+
+    $this->actingAs(marriageOfficer())->post(route('admin.marriages.store'), marriageApplication([
+        'groom_member_id' => $groom->id,
+        'groom_father_member_id' => $groom->id,
+        'groom_father_name' => $groom->full_name,
+        'bride_father_member_id' => $woman->id,
+        'bride_father_name' => $woman->full_name,
+    ]))->assertSessionHasErrors([
+        'groom_father_member_id' => 'A partner cannot be their own father.',
+        'bride_father_member_id' => "{$woman->full_name} is not recorded as a man in the member register.",
+    ]);
+
+    expect(MarriageApplication::query()->count())->toBe(0);
+});
+
+test('the parents lookup finds a child\'s father and mother in their family', function () {
+    $family = Family::factory()->create();
+    $father = Member::factory()->inFamily($family, FamilyRole::Father)->create(['gender' => Gender::Male]);
+    $mother = Member::factory()->inFamily($family, FamilyRole::Mother)->create(['gender' => Gender::Female]);
+    $son = Member::factory()->inFamily($family, FamilyRole::Child)->create(['gender' => Gender::Male]);
+    $user = marriageOfficer();
+
+    $this->actingAs($user)->getJson(route('admin.lookup.parents', $son))
+        ->assertOk()
+        ->assertJsonPath('data.father.id', $father->id)
+        ->assertJsonPath('data.mother.id', $mother->id);
+
+    $this->actingAs($user)->getJson(route('admin.lookup.parents', $father))
+        ->assertOk()
+        ->assertJsonPath('data.father', null)
+        ->assertJsonPath('data.mother', null);
 });
 
 test('a member can only be in one open application', function () {
@@ -275,7 +332,10 @@ test('recording the wedding writes it in the marriage register', function () {
     $this->travelTo('2026-11-01');
     $groom = Member::factory()->create(['gender' => Gender::Male, 'marital_status' => MaritalStatus::Single]);
     $bride = Member::factory()->create(['gender' => Gender::Female, 'marital_status' => MaritalStatus::Single]);
-    $application = MarriageApplication::factory()->forCouple($groom, $bride)->cleared()->create();
+    $application = MarriageApplication::factory()->forCouple($groom, $bride)->cleared()->create([
+        'groom_father_name' => 'Emeka Okeke',
+        'groom_mother_name' => 'Ada Okeke',
+    ]);
     $user = marriageOfficer(Permission::SacramentsCreate);
 
     $this->actingAs($user)
@@ -299,6 +359,8 @@ test('recording the wedding writes it in the marriage register', function () {
         ->and($record->spouse_name)->toBe($bride->full_name)
         ->and($record->received_on->toDateString())->toBe('2026-10-31')
         ->and($record->elsewhere)->toBeFalse()
+        ->and($record->father_name)->toBe('Emeka Okeke')
+        ->and($record->mother_name)->toBe('Ada Okeke')
         ->and($record->recorded_by)->toBe($user->id)
         ->and($record->sponsors->pluck('name')->all())->toBe(['Paul Nnaji'])
         ->and($application->status)->toBe(MarriageStatus::Married)

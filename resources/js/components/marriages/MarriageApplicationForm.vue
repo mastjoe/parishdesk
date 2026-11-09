@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
 import { CalendarDays, Church, HeartHandshake, UserRound } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, onMounted, reactive } from 'vue';
 import InputError from '@/components/InputError.vue';
 import RecordPicker from '@/components/app/RecordPicker.vue';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { formatPlainDate } from '@/lib/people';
-import { members as lookupMembers } from '@/routes/admin/lookup';
+import {
+    members as lookupMembers,
+    parents as lookupParents,
+} from '@/routes/admin/lookup';
 import { index, show, store, update } from '@/routes/admin/marriages';
-import type { MarriageFields, MarriageRow, MemberSummary } from '@/types';
+import type {
+    MarriageFields,
+    MarriageParent,
+    MarriageParentMembers,
+    MarriageRow,
+    MarriageSide,
+    MemberSummary,
+} from '@/types';
 
 const props = defineProps<{
     /** The application being changed; omit to open a new one. */
-    application?: MarriageRow & { fields: MarriageFields };
+    application?: MarriageRow & {
+        fields: MarriageFields;
+        parentMembers: MarriageParentMembers;
+    };
     /** A member to start a new application with, as groom or bride. */
     member?: MemberSummary | null;
 }>();
@@ -34,6 +47,14 @@ const form = useForm({
         fields?.bride_member_id ?? (startsAsBride ? props.member!.id : null),
     bride_name: fields?.bride_name ?? (startsAsBride ? props.member!.name : ''),
     bride_parish: fields?.bride_parish ?? '',
+    groom_father_member_id: fields?.groom_father_member_id ?? null,
+    groom_father_name: fields?.groom_father_name ?? '',
+    groom_mother_member_id: fields?.groom_mother_member_id ?? null,
+    groom_mother_name: fields?.groom_mother_name ?? '',
+    bride_father_member_id: fields?.bride_father_member_id ?? null,
+    bride_father_name: fields?.bride_father_name ?? '',
+    bride_mother_member_id: fields?.bride_mother_member_id ?? null,
+    bride_mother_name: fields?.bride_mother_name ?? '',
     proposed_date: fields?.proposed_date ?? '',
     wedding_parish: fields?.wedding_parish ?? '',
     officiant: fields?.officiant ?? '',
@@ -55,12 +76,82 @@ const sides = computed(() => [
     },
 ]);
 
-const pick = (side: 'groom' | 'bride', picked: MemberSummary | null) => {
+const parentKinds: { key: MarriageParent; title: string }[] = [
+    { key: 'father', title: 'Father' },
+    { key: 'mother', title: 'Mother' },
+];
+
+// The parents picked from the register, so each picker shows its member.
+const parentMembers = reactive<MarriageParentMembers>({
+    groom_father: null,
+    groom_mother: null,
+    bride_father: null,
+    bride_mother: null,
+    ...props.application?.parentMembers,
+});
+
+const pickParent = (
+    side: MarriageSide,
+    parent: MarriageParent,
+    picked: MemberSummary | null,
+) => {
+    parentMembers[`${side}_${parent}`] = picked;
+
+    if (picked) {
+        form[`${side}_${parent}_name`] = picked.name;
+    }
+};
+
+/**
+ * Fill in a partner's father and mother from their family in the register,
+ * leaving alone any parent already entered.
+ */
+const fillParents = async (side: MarriageSide, memberId: number) => {
+    try {
+        const response = await fetch(lookupParents(memberId).url, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const { data } = (await response.json()) as {
+            data: Record<MarriageParent, MemberSummary | null>;
+        };
+
+        for (const { key } of parentKinds) {
+            const found = data[key];
+
+            if (
+                found &&
+                form[`${side}_member_id`] === memberId &&
+                !form[`${side}_${key}_member_id`] &&
+                !form[`${side}_${key}_name`]
+            ) {
+                form[`${side}_${key}_member_id`] = found.id;
+                pickParent(side, key, found);
+            }
+        }
+    } catch {
+        // The parents can still be entered by hand.
+    }
+};
+
+const pick = (side: MarriageSide, picked: MemberSummary | null) => {
     if (picked) {
         form[`${side}_name`] = picked.name;
         form[`${side}_parish`] = '';
+        fillParents(side, picked.id);
     }
 };
+
+onMounted(() => {
+    if (!props.application && props.member) {
+        fillParents(startsAsGroom ? 'groom' : 'bride', props.member.id);
+    }
+});
 
 const submit = () => {
     if (props.application) {
@@ -83,7 +174,8 @@ const submit = () => {
                     <h2 class="font-semibold">{{ side.title }}</h2>
                     <p class="text-sm text-muted-foreground">
                         Pick the member, or type the name and parish of someone
-                        from another parish.
+                        from another parish. A member's parents are filled in
+                        from their family.
                     </p>
                 </header>
                 <div class="grid gap-4 p-5">
@@ -132,6 +224,55 @@ const submit = () => {
                             />
                             <InputError
                                 :message="form.errors[`${side.key}_parish`]"
+                            />
+                        </div>
+                    </div>
+                    <div class="grid gap-4 border-t pt-4 sm:grid-cols-2">
+                        <div
+                            v-for="parent in parentKinds"
+                            :key="parent.key"
+                            class="grid content-start gap-2"
+                        >
+                            <Label
+                                :for="`marriage-${side.key}-${parent.key}-member`"
+                                >{{ parent.title }}</Label
+                            >
+                            <RecordPicker
+                                :id="`marriage-${side.key}-${parent.key}-member`"
+                                v-model="
+                                    form[`${side.key}_${parent.key}_member_id`]
+                                "
+                                :url="lookupMembers().url"
+                                :initial="
+                                    parentMembers[`${side.key}_${parent.key}`]
+                                "
+                                placeholder="Pick from the register…"
+                                :describe="
+                                    (item: MemberSummary) => item.memberNo
+                                "
+                                @select="
+                                    pickParent(side.key, parent.key, $event)
+                                "
+                            />
+                            <InputError
+                                :message="
+                                    form.errors[
+                                        `${side.key}_${parent.key}_member_id`
+                                    ]
+                                "
+                            />
+                            <Input
+                                :id="`marriage-${side.key}-${parent.key}-name`"
+                                v-model="form[`${side.key}_${parent.key}_name`]"
+                                :aria-label="`${side.title}'s ${parent.key}'s name`"
+                                :placeholder="`Or type the ${parent.key}'s name`"
+                            />
+                            <InputError
+                                :message="
+                                    form.errors[
+                                        `${side.key}_${parent.key}_name`
+                                    ]
+                                "
                             />
                         </div>
                     </div>

@@ -17,9 +17,17 @@ return new class extends Migration
             $table->foreignId('groom_member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->string('groom_name');
             $table->string('groom_parish')->nullable();
+            $table->foreignId('groom_father_member_id')->nullable()->constrained('members')->nullOnDelete();
+            $table->string('groom_father_name')->nullable();
+            $table->foreignId('groom_mother_member_id')->nullable()->constrained('members')->nullOnDelete();
+            $table->string('groom_mother_name')->nullable();
             $table->foreignId('bride_member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->string('bride_name');
             $table->string('bride_parish')->nullable();
+            $table->foreignId('bride_father_member_id')->nullable()->constrained('members')->nullOnDelete();
+            $table->string('bride_father_name')->nullable();
+            $table->foreignId('bride_mother_member_id')->nullable()->constrained('members')->nullOnDelete();
+            $table->string('bride_mother_name')->nullable();
             $table->string('status', 20)->default('applied');
             $table->date('proposed_date')->nullable();
             $table->string('wedding_parish')->nullable();

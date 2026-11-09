@@ -51,6 +51,8 @@ class MarriageSeeder extends Seeder
                 'bride_member_id' => $bride?->id,
                 'bride_name' => $bride->full_name ?? $this->person('female'),
                 'bride_parish' => $bride === null ? 'Sacred Heart Parish, Port Harcourt' : null,
+                ...$this->parents('groom', $groom),
+                ...$this->parents('bride', $bride),
                 'proposed_date' => $proposed->next(CarbonInterface::SATURDAY),
                 'officiant' => fake()->randomElement(['Rev. Fr. Michael Eze', 'Rev. Fr. John Bosco Ani']),
             ]);
@@ -105,6 +107,24 @@ class MarriageSeeder extends Seeder
     private function person(string $gender): string
     {
         return fake()->firstName($gender).' '.fake()->lastName();
+    }
+
+    /**
+     * Get a partner's parents: from their family when they are in the
+     * register, otherwise made-up names.
+     *
+     * @return array<string, int|string|null>
+     */
+    private function parents(string $side, ?Member $partner): array
+    {
+        $family = $partner?->familyParents();
+
+        return [
+            "{$side}_father_member_id" => $family['father']->id ?? null,
+            "{$side}_father_name" => $family['father']->full_name ?? ($partner === null ? $this->person('male') : null),
+            "{$side}_mother_member_id" => $family['mother']->id ?? null,
+            "{$side}_mother_name" => $family['mother']->full_name ?? ($partner === null ? $this->person('female') : null),
+        ];
     }
 
     /**

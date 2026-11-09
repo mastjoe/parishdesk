@@ -3,10 +3,17 @@ import { Head, setLayoutProps } from '@inertiajs/vue3';
 import PageHeader from '@/components/app/PageHeader.vue';
 import MarriageApplicationForm from '@/components/marriages/MarriageApplicationForm.vue';
 import { edit, index, show } from '@/routes/admin/marriages';
-import type { MarriageFields, MarriageRow } from '@/types';
+import type {
+    MarriageFields,
+    MarriageParentMembers,
+    MarriageRow,
+} from '@/types';
 
 const props = defineProps<{
-    application: MarriageRow & { fields: MarriageFields };
+    application: MarriageRow & {
+        fields: MarriageFields;
+        parentMembers: MarriageParentMembers;
+    };
 }>();
 
 setLayoutProps({

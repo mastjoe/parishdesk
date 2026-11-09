@@ -29,9 +29,17 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string $application_no
  * @property int|null $groom_member_id
  * @property string $groom_name
+ * @property int|null $groom_father_member_id
+ * @property string|null $groom_father_name
+ * @property int|null $groom_mother_member_id
+ * @property string|null $groom_mother_name
  * @property string|null $groom_parish The groom's parish when it is not this one
  * @property int|null $bride_member_id
  * @property string $bride_name
+ * @property int|null $bride_father_member_id
+ * @property string|null $bride_father_name
+ * @property int|null $bride_mother_member_id
+ * @property string|null $bride_mother_name
  * @property string|null $bride_parish The bride's parish when it is not this one
  * @property MarriageStatus $status
  * @property Carbon|null $proposed_date
@@ -51,6 +59,8 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 #[Fillable([
     'groom_member_id', 'groom_name', 'groom_parish', 'bride_member_id', 'bride_name', 'bride_parish',
+    'groom_father_member_id', 'groom_father_name', 'groom_mother_member_id', 'groom_mother_name',
+    'bride_father_member_id', 'bride_father_name', 'bride_mother_member_id', 'bride_mother_name',
     'proposed_date', 'wedding_parish', 'officiant', 'notes',
 ])]
 class MarriageApplication extends Model
