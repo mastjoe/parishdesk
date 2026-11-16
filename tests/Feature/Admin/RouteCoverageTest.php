@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BannsLetter;
 use App\Models\BannsObjection;
 use App\Models\ClergyAssignment;
 use App\Models\Community;
@@ -37,6 +38,7 @@ test('every admin route requires its own permission', function () {
         'sacrament' => SacramentRecord::factory()->create()->id,
         'marriage' => $marriage = MarriageApplication::factory()->withBanns(1)->create(),
         'objection' => BannsObjection::factory()->for($marriage, 'application')->create()->id,
+        'letter' => BannsLetter::Confirmation->value,
     ];
     $parameters['publication'] = $marriage->publications()->sole()->id;
     $parameters['marriage'] = $marriage->id;

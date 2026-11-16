@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Access\RoleController;
 use App\Http\Controllers\Admin\Access\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Marriages\BannsLetterController;
 use App\Http\Controllers\Admin\Marriages\BannsObjectionController;
 use App\Http\Controllers\Admin\Marriages\BannsPublicationController;
 use App\Http\Controllers\Admin\Marriages\MarriageApplicationController;
@@ -80,6 +81,7 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             Route::post('objections', [BannsObjectionController::class, 'store'])->name('objections.store');
             Route::patch('objections/{objection}', [BannsObjectionController::class, 'update'])->name('objections.update');
             Route::post('wedding', [WeddingController::class, 'store'])->name('wedding.store');
+            Route::get('letters/{letter}', [BannsLetterController::class, 'show'])->name('letters.show');
         });
 
         Route::get('change-requests', [ChangeRequestController::class, 'index'])->name('change-requests.index');

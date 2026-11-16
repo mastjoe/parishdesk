@@ -46,6 +46,9 @@ export type MarriageSteps = {
     marry: boolean;
 };
 
+/** A letter about the banns that can be sent to another parish now. */
+export type BannsLetter = Option & { addressee: string };
+
 export type MarriageSide = 'groom' | 'bride';
 
 export type MarriageParent = 'father' | 'mother';
@@ -77,6 +80,7 @@ export type MarriageDetail = MarriageRow & {
     matrimonyRecordId: number | null;
     createdBy: string | null;
     steps: MarriageSteps;
+    letters: BannsLetter[];
 };
 
 /** The fields of an application as the form edits them. */

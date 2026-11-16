@@ -12,7 +12,9 @@ import {
     BookMarked,
     CalendarDays,
     Check,
+    ChevronDown,
     Church,
+    FileText,
     HeartHandshake,
     Megaphone,
     Pencil,
@@ -38,6 +40,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,6 +67,7 @@ import {
     store as bannsStore,
 } from '@/routes/admin/marriages/banns';
 import { update as checksUpdate } from '@/routes/admin/marriages/checks';
+import { show as letterShow } from '@/routes/admin/marriages/letters';
 import {
     store as objectionStore,
     update as objectionUpdate,
@@ -330,6 +339,39 @@ const remove = () => {
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
+                    <DropdownMenu v-if="application.letters.length">
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="outline" size="sm">
+                                <FileText class="size-4" /> Letters
+                                <ChevronDown class="size-3.5 opacity-60" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-72">
+                            <DropdownMenuItem
+                                v-for="letter in application.letters"
+                                :key="letter.value"
+                                as-child
+                            >
+                                <a
+                                    :href="
+                                        letterShow.url({
+                                            marriage: application.id,
+                                            letter: letter.value,
+                                        })
+                                    "
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="flex cursor-pointer flex-col items-start gap-0.5"
+                                >
+                                    <span>{{ letter.label }}</span>
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >{{ letter.addressee }}</span
+                                    >
+                                </a>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button
                         v-if="can.update"
                         variant="outline"

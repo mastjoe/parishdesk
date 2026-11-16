@@ -2,6 +2,7 @@
 
 namespace App\Support\Marriages;
 
+use App\Enums\BannsLetter;
 use App\Enums\MarriageCheck;
 use App\Models\BannsObjection;
 use App\Models\BannsPublication;
@@ -95,6 +96,11 @@ class MarriagePresenter
                 'clear' => $application->canBeCleared(),
                 'marry' => $application->canBeMarried(),
             ],
+            'letters' => array_map(fn (BannsLetter $letter): array => [
+                'value' => $letter->value,
+                'label' => $letter->label(),
+                'addressee' => $letter->addressee($application),
+            ], BannsLetter::availableFor($application)),
         ];
     }
 
