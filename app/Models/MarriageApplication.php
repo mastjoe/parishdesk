@@ -245,6 +245,16 @@ class MarriageApplication extends Model
     }
 
     /**
+     * Whether the groom and the bride can still be changed. They are fixed
+     * once the documents are verified, since the checks and the banns are
+     * for this couple.
+     */
+    public function canChangeCouple(): bool
+    {
+        return $this->status === MarriageStatus::Applied;
+    }
+
+    /**
      * Whether every check is done, so the documents can be verified.
      */
     public function canVerifyDocuments(): bool

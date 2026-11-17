@@ -111,11 +111,67 @@ test('a parent from the register must be the right gender and not the partner', 
         'bride_father_member_id' => $woman->id,
         'bride_father_name' => $woman->full_name,
     ]))->assertSessionHasErrors([
-        'groom_father_member_id' => 'A partner cannot be their own father.',
+        'groom_father_member_id' => 'The groom or the bride cannot also be a father.',
         'bride_father_member_id' => "{$woman->full_name} is not recorded as a man in the member register.",
     ]);
 
     expect(MarriageApplication::query()->count())->toBe(0);
+});
+
+test('a partner cannot also be named as the other partner\'s parent', function () {
+    $groom = Member::factory()->create(['gender' => Gender::Male]);
+    $bride = Member::factory()->create(['gender' => Gender::Female]);
+
+    $this->actingAs(marriageOfficer())->post(route('admin.marriages.store'), marriageApplication([
+        'groom_member_id' => $groom->id,
+        'bride_member_id' => $bride->id,
+        'bride_father_member_id' => $groom->id,
+        'bride_father_name' => $groom->full_name,
+        'groom_mother_member_id' => $bride->id,
+        'groom_mother_name' => $bride->full_name,
+    ]))->assertSessionHasErrors([
+        'bride_father_member_id' => 'The groom or the bride cannot also be a father.',
+        'groom_mother_member_id' => 'The groom or the bride cannot also be a mother.',
+    ]);
+});
+
+test('the groom and the bride cannot be changed once the documents are verified', function () {
+    $groom = Member::factory()->create(['gender' => Gender::Male]);
+    $bride = Member::factory()->create(['gender' => Gender::Female]);
+    $otherMan = Member::factory()->create(['gender' => Gender::Male]);
+    $application = MarriageApplication::factory()->forCouple($groom, $bride)->withBanns()->create();
+    $unchanged = ['groom_member_id' => $groom->id, 'groom_name' => $groom->full_name, 'bride_member_id' => $bride->id, 'bride_name' => $bride->full_name];
+
+    $this->actingAs(marriageOfficer())
+        ->put(route('admin.marriages.update', $application), marriageApplication([...$unchanged, 'groom_member_id' => $otherMan->id, 'groom_name' => $otherMan->full_name]))
+        ->assertSessionHasErrors(['groom_member_id' => 'The groom and the bride cannot be changed once the documents are verified.']);
+
+    expect($application->fresh()->groom_member_id)->toBe($groom->id);
+
+    $this->actingAs(marriageOfficer())
+        ->put(route('admin.marriages.update', $application), marriageApplication([...$unchanged, 'officiant' => 'Rev. Fr. Paul Obi']))
+        ->assertSessionHasNoErrors();
+
+    expect($application->fresh()->officiant)->toBe('Rev. Fr. Paul Obi');
+});
+
+test('an application can still be saved after its member is archived', function () {
+    $groom = Member::factory()->create(['gender' => Gender::Male]);
+    $application = MarriageApplication::factory()->forCouple($groom)->create();
+    $groom->delete();
+
+    $this->actingAs(marriageOfficer())
+        ->put(route('admin.marriages.update', $application), marriageApplication(['groom_member_id' => $groom->id, 'groom_name' => $groom->full_name, 'notes' => 'Moved away.']))
+        ->assertSessionHasNoErrors();
+
+    expect($application->fresh()->notes)->toBe('Moved away.');
+
+    $archived = Member::factory()->create(['gender' => Gender::Female]);
+    $archived->delete();
+
+    $this->actingAs(marriageOfficer())
+        ->put(route('admin.marriages.update', $application), marriageApplication(['groom_member_id' => $groom->id, 'groom_name' => $groom->full_name, 'bride_member_id' => $archived->id]))
+        ->assertSessionHasErrors(['bride_member_id' => 'The selected bride is invalid.']);
 });
 
 test('the parents lookup finds a child\'s father and mother in their family', function () {
@@ -359,8 +415,8 @@ test('recording the wedding writes it in the marriage register', function () {
         ->and($record->spouse_name)->toBe($bride->full_name)
         ->and($record->received_on->toDateString())->toBe('2026-10-31')
         ->and($record->elsewhere)->toBeFalse()
-        ->and($record->father_name)->toBe('Emeka Okeke')
-        ->and($record->mother_name)->toBe('Ada Okeke')
+        ->and($record->father_name)->toBeNull()
+        ->and($record->mother_name)->toBeNull()
         ->and($record->recorded_by)->toBe($user->id)
         ->and($record->sponsors->pluck('name')->all())->toBe(['Paul Nnaji'])
         ->and($application->status)->toBe(MarriageStatus::Married)

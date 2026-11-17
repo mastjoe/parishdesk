@@ -34,6 +34,10 @@ const props = defineProps<{
 }>();
 
 const fields = props.application?.fields;
+
+/** The groom and the bride are fixed once the documents are verified. */
+const coupleLocked =
+    !!props.application && props.application.status !== 'applied';
 const startsAsGroom = props.member?.gender === 'male';
 const startsAsBride = props.member?.gender === 'female';
 
@@ -102,6 +106,29 @@ const pickParent = (
     }
 };
 
+// The parents filled in from a partner's family, so picking a different
+// partner can take them back out without touching parents typed by hand.
+const autoFilled = reactive<
+    Partial<Record<`${MarriageSide}_${MarriageParent}`, number>>
+>({});
+
+const clearAutoFilledParents = (side: MarriageSide) => {
+    for (const { key } of parentKinds) {
+        const filledId = autoFilled[`${side}_${key}`];
+
+        if (
+            filledId !== undefined &&
+            form[`${side}_${key}_member_id`] === filledId
+        ) {
+            form[`${side}_${key}_member_id`] = null;
+            form[`${side}_${key}_name`] = '';
+            parentMembers[`${side}_${key}`] = null;
+        }
+
+        delete autoFilled[`${side}_${key}`];
+    }
+};
+
 /**
  * Fill in a partner's father and mother from their family in the register,
  * leaving alone any parent already entered.
@@ -131,6 +158,7 @@ const fillParents = async (side: MarriageSide, memberId: number) => {
                 !form[`${side}_${key}_name`]
             ) {
                 form[`${side}_${key}_member_id`] = found.id;
+                autoFilled[`${side}_${key}`] = found.id;
                 pickParent(side, key, found);
             }
         }
@@ -140,6 +168,8 @@ const fillParents = async (side: MarriageSide, memberId: number) => {
 };
 
 const pick = (side: MarriageSide, picked: MemberSummary | null) => {
+    clearAutoFilledParents(side);
+
     if (picked) {
         form[`${side}_name`] = picked.name;
         form[`${side}_parish`] = '';
@@ -179,7 +209,22 @@ const submit = () => {
                     </p>
                 </header>
                 <div class="grid gap-4 p-5">
-                    <div class="grid gap-2">
+                    <div v-if="coupleLocked" class="grid gap-1">
+                        <p class="font-medium">
+                            {{ form[`${side.key}_name`] }}
+                        </p>
+                        <p class="text-sm text-muted-foreground">
+                            The groom and the bride cannot be changed once the
+                            documents are verified.
+                        </p>
+                        <InputError
+                            :message="
+                                form.errors[`${side.key}_member_id`] ??
+                                form.errors[`${side.key}_name`]
+                            "
+                        />
+                    </div>
+                    <div v-if="!coupleLocked" class="grid gap-2">
                         <Label :for="`marriage-${side.key}-member`"
                             >Member register</Label
                         >
@@ -196,7 +241,10 @@ const submit = () => {
                             :message="form.errors[`${side.key}_member_id`]"
                         />
                     </div>
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <div
+                        v-if="!coupleLocked"
+                        class="grid gap-4 sm:grid-cols-2"
+                    >
                         <div class="grid gap-2">
                             <Label :for="`marriage-${side.key}-name`"
                                 >Full name</Label

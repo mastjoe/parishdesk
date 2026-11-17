@@ -53,12 +53,16 @@ class PublishBanns
 
     /**
      * Take back the latest publication. With none left, the application
-     * returns to Documents verified.
+     * returns to Documents verified. The application is locked, as when
+     * publishing, so the latest publication is still the latest.
      */
     public function undo(MarriageApplication $application, BannsPublication $publication): void
     {
         DB::transaction(function () use ($application, $publication): void {
-            if (! $application->canUndoBanns() || $publication->number !== $application->bannsPublished()) {
+            $application = MarriageApplication::query()->lockForUpdate()->findOrFail($application->id);
+            $latest = $application->publications()->reorder('number', 'desc')->first();
+
+            if (! $application->canUndoBanns() || $latest === null || $latest->isNot($publication)) {
                 throw ValidationException::withMessages(['stage' => __('Only the latest publication of the banns can be taken back.')]);
             }
 

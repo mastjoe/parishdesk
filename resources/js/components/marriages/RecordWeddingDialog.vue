@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { localToday } from '@/lib/format';
 import { members as lookupMembers } from '@/routes/admin/lookup';
 import { store } from '@/routes/admin/marriages/wedding';
 import type { MarriageDetail, MemberSummary } from '@/types';
@@ -29,7 +30,7 @@ const open = defineModel<boolean>('open', { default: false });
 /** The marriage register takes up to four witnesses. */
 const maxWitnesses = 4;
 
-const today = new Date().toISOString().slice(0, 10);
+const today = localToday();
 
 const form = useForm({
     received_on: '',

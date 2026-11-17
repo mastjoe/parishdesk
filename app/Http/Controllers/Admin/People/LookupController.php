@@ -7,6 +7,7 @@ use App\Models\Family;
 use App\Models\Member;
 use App\Support\People\MemberPresenter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -45,6 +46,7 @@ class LookupController extends Controller
         Gate::authorize('lookup', Member::class);
 
         $parents = $member->familyParents();
+        (new EloquentCollection(array_filter($parents)))->load('media');
 
         return response()->json(['data' => [
             'father' => $parents['father'] !== null ? MemberPresenter::summary($parents['father']) : null,

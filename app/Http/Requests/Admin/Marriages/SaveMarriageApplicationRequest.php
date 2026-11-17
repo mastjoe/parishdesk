@@ -6,9 +6,11 @@ use App\Enums\Gender;
 use App\Models\MarriageApplication;
 use App\Models\Member;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Validator;
 
 class SaveMarriageApplicationRequest extends FormRequest
@@ -54,10 +56,10 @@ class SaveMarriageApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'groom_member_id' => ['nullable', 'integer', 'different:bride_member_id', Rule::exists('members', 'id')->withoutTrashed()],
+            'groom_member_id' => ['nullable', 'integer', 'different:bride_member_id', $this->memberExists('groom_member_id')],
             'groom_name' => ['required', 'string', 'max:255'],
             'groom_parish' => ['nullable', 'string', 'max:255'],
-            'bride_member_id' => ['nullable', 'integer', Rule::exists('members', 'id')->withoutTrashed()],
+            'bride_member_id' => ['nullable', 'integer', $this->memberExists('bride_member_id')],
             'bride_name' => ['required', 'string', 'max:255'],
             'bride_parish' => ['nullable', 'string', 'max:255'],
             ...$this->parentRules('groom'),
@@ -80,7 +82,7 @@ class SaveMarriageApplicationRequest extends FormRequest
         $rules = [];
 
         foreach (['father', 'mother'] as $parent) {
-            $rules["{$side}_{$parent}_member_id"] = ['nullable', 'integer', "different:{$side}_member_id", Rule::exists('members', 'id')->withoutTrashed()];
+            $rules["{$side}_{$parent}_member_id"] = ['nullable', 'integer', 'different:groom_member_id,bride_member_id', $this->memberExists("{$side}_{$parent}_member_id")];
             $rules["{$side}_{$parent}_name"] = ['nullable', "required_with:{$side}_{$parent}_member_id", 'string', 'max:255'];
         }
 
@@ -88,11 +90,26 @@ class SaveMarriageApplicationRequest extends FormRequest
     }
 
     /**
+     * Require a member who is still in the register, or the one the
+     * application already names, so an application whose member was later
+     * archived can still be saved.
+     */
+    private function memberExists(string $field): Exists
+    {
+        $stored = $this->application()?->getAttribute($field);
+
+        return Rule::exists('members', 'id')->where(fn (Builder $query) => $query
+            ->whereNull('deleted_at')
+            ->when($stored !== null, fn (Builder $query) => $query->orWhere('id', $stored)));
+    }
+
+    /**
      * Get the "after" validation callables for the request.
      *
-     * A member can only be the groom or a father if he is a man and the bride
-     * or a mother if she is a woman, and can only be in one open application
-     * at a time.
+     * The groom and the bride are fixed once the documents are verified. A
+     * member can only be the groom or a father if he is a man and the bride
+     * or a mother if she is a woman, and a partner can only be in one open
+     * application at a time.
      *
      * @return array<int, callable(Validator): void>
      */
@@ -100,23 +117,45 @@ class SaveMarriageApplicationRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if ($validator->errors()->hasAny(['groom_member_id', 'bride_member_id'])) {
+                $application = $this->application();
+
+                if ($application === null || $application->canChangeCouple()) {
                     return;
                 }
 
-                foreach (['groom' => Gender::Male, 'bride' => Gender::Female] as $side => $gender) {
-                    $member = $this->filled("{$side}_member_id") ? Member::query()->find($this->integer("{$side}_member_id")) : null;
+                foreach (['groom_member_id', 'groom_name', 'bride_member_id', 'bride_name'] as $field) {
+                    if ($this->input($field) != $application->getAttribute($field)) {
+                        $validator->errors()->add($field, __('The groom and the bride cannot be changed once the documents are verified.'));
+                    }
+                }
+            },
+            function (Validator $validator): void {
+                $genders = [
+                    'groom_member_id' => Gender::Male,
+                    'bride_member_id' => Gender::Female,
+                    'groom_father_member_id' => Gender::Male,
+                    'groom_mother_member_id' => Gender::Female,
+                    'bride_father_member_id' => Gender::Male,
+                    'bride_mother_member_id' => Gender::Female,
+                ];
+
+                foreach ($genders as $key => $gender) {
+                    $member = ! $validator->errors()->has($key) && $this->filled($key) ? Member::query()->find($this->integer($key)) : null;
 
                     if ($member === null) {
                         continue;
                     }
 
                     if ($member->gender !== $gender) {
-                        $validator->errors()->add("{$side}_member_id", __(':name is not recorded as a :gender in the member register.', [
+                        $validator->errors()->add($key, __(':name is not recorded as a :gender in the member register.', [
                             'name' => $member->full_name,
                             'gender' => $gender === Gender::Male ? 'man' : 'woman',
                         ]));
 
+                        continue;
+                    }
+
+                    if (! in_array($key, ['groom_member_id', 'bride_member_id'], true)) {
                         continue;
                     }
 
@@ -125,30 +164,10 @@ class SaveMarriageApplicationRequest extends FormRequest
                         ->first();
 
                     if ($other !== null) {
-                        $validator->errors()->add("{$side}_member_id", __(':name already has an open marriage application (:number).', [
+                        $validator->errors()->add($key, __(':name already has an open marriage application (:number).', [
                             'name' => $member->full_name,
                             'number' => $other->application_no,
                         ]));
-                    }
-                }
-            },
-            function (Validator $validator): void {
-                foreach (['groom', 'bride'] as $side) {
-                    foreach (['father' => Gender::Male, 'mother' => Gender::Female] as $parent => $gender) {
-                        $key = "{$side}_{$parent}_member_id";
-
-                        if ($validator->errors()->has($key) || ! $this->filled($key)) {
-                            continue;
-                        }
-
-                        $member = Member::query()->find($this->integer($key));
-
-                        if ($member !== null && $member->gender !== $gender) {
-                            $validator->errors()->add($key, __(':name is not recorded as a :gender in the member register.', [
-                                'name' => $member->full_name,
-                                'gender' => $gender === Gender::Male ? 'man' : 'woman',
-                            ]));
-                        }
                     }
                 }
             },
@@ -164,8 +183,8 @@ class SaveMarriageApplicationRequest extends FormRequest
     {
         return [
             'groom_member_id.different' => __('The groom and the bride must be different people.'),
-            '*_father_member_id.different' => __('A partner cannot be their own father.'),
-            '*_mother_member_id.different' => __('A partner cannot be their own mother.'),
+            '*_father_member_id.different' => __('The groom or the bride cannot also be a father.'),
+            '*_mother_member_id.different' => __('The groom or the bride cannot also be a mother.'),
         ];
     }
 

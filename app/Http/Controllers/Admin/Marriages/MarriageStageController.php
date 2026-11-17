@@ -6,8 +6,10 @@ use App\Enums\MarriageCheck;
 use App\Enums\MarriageStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MarriageApplication;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +18,9 @@ use Inertia\Inertia;
 /**
  * Moves a marriage application through its checks, its clearance, or its
  * withdrawal. The banns and the wedding have their own controllers.
+ *
+ * Each step locks the application and checks it again, so it cannot
+ * overwrite a step another clerk has just taken.
  */
 class MarriageStageController extends Controller
 {
@@ -31,10 +36,11 @@ class MarriageStageController extends Controller
             'checks.*' => ['distinct', Rule::enum(MarriageCheck::class)],
         ]);
 
-        $this->ensure($marriage->canChangeChecks(), __('The checklist is fixed once the documents are verified.'));
+        $this->transition($marriage, function (MarriageApplication $marriage) use ($validated): void {
+            $this->ensure($marriage->canChangeChecks(), __('The checklist is fixed once the documents are verified.'));
 
-        $marriage->checks = array_values(array_intersect(MarriageCheck::values(), $validated['checks']));
-        $marriage->save();
+            $marriage->checks = array_values(array_intersect(MarriageCheck::values(), $validated['checks']));
+        });
 
         return back();
     }
@@ -46,11 +52,12 @@ class MarriageStageController extends Controller
     {
         Gate::authorize('update', $marriage);
 
-        $this->ensure($marriage->canVerifyDocuments(), __('Complete every check before verifying the documents.'));
+        $this->transition($marriage, function (MarriageApplication $marriage): void {
+            $this->ensure($marriage->canVerifyDocuments(), __('Complete every check before verifying the documents.'));
 
-        $marriage->status = MarriageStatus::DocumentsVerified;
-        $marriage->documents_verified_at = now();
-        $marriage->save();
+            $marriage->status = MarriageStatus::DocumentsVerified;
+            $marriage->documents_verified_at = now();
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Documents verified. The banns can now be published.')]);
 
@@ -64,13 +71,14 @@ class MarriageStageController extends Controller
     {
         Gate::authorize('update', $marriage);
 
-        $this->ensure($marriage->canBeCleared(), $marriage->hasOpenObjection()
-            ? __('Resolve the objection before clearing the couple.')
-            : __('Publish the banns :count times before clearing the couple.', ['count' => MarriageApplication::BANNS_REQUIRED]));
+        $this->transition($marriage, function (MarriageApplication $marriage): void {
+            $this->ensure($marriage->canBeCleared(), $marriage->hasOpenObjection()
+                ? __('Resolve the objection before clearing the couple.')
+                : __('Publish the banns :count times before clearing the couple.', ['count' => MarriageApplication::BANNS_REQUIRED]));
 
-        $marriage->status = MarriageStatus::Cleared;
-        $marriage->cleared_at = now();
-        $marriage->save();
+            $marriage->status = MarriageStatus::Cleared;
+            $marriage->cleared_at = now();
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':couple are cleared to marry.', ['couple' => $marriage->coupleName()])]);
 
@@ -86,14 +94,33 @@ class MarriageStageController extends Controller
 
         $validated = $request->validate(['reason' => ['required', 'string', 'max:2000']]);
 
-        $marriage->status = MarriageStatus::Withdrawn;
-        $marriage->withdrawn_at = now();
-        $marriage->withdrawal_reason = $validated['reason'];
-        $marriage->save();
+        $this->transition($marriage, function (MarriageApplication $marriage) use ($validated): void {
+            $this->ensure($marriage->isOpen(), __('The application is already closed.'));
+
+            $marriage->status = MarriageStatus::Withdrawn;
+            $marriage->withdrawn_at = now();
+            $marriage->withdrawal_reason = $validated['reason'];
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Marriage application :number withdrawn.', ['number' => $marriage->application_no])]);
 
         return back();
+    }
+
+    /**
+     * Lock the application, apply the step to the locked copy and save it.
+     *
+     * @param  Closure(MarriageApplication): void  $step
+     */
+    private function transition(MarriageApplication $marriage, Closure $step): void
+    {
+        DB::transaction(function () use ($marriage, $step): void {
+            $locked = MarriageApplication::query()->lockForUpdate()->findOrFail($marriage->id);
+
+            $step($locked);
+
+            $locked->save();
+        });
     }
 
     /**

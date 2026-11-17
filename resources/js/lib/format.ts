@@ -1,4 +1,15 @@
 /**
+ * Get today's date in the user's own time zone as "YYYY-MM-DD", for date
+ * inputs. `toISOString()` would give the date in UTC instead.
+ */
+export function localToday(): string {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, '0');
+
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
  * Format an ISO date string as a short date, e.g. "29 Oct 2026".
  */
 export function formatDate(value: string | null | undefined): string {

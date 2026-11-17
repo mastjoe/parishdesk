@@ -49,7 +49,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { formatDate, formatRelative } from '@/lib/format';
+import { formatDate, formatRelative, localToday } from '@/lib/format';
 import { marriageStages, marriageTone } from '@/lib/marriages';
 import { formatPlainDate } from '@/lib/people';
 import { cn } from '@/lib/utils';
@@ -125,7 +125,7 @@ const stageError = computed(
     () => (page.props.errors as Record<string, string | undefined>).stage,
 );
 
-const today = new Date().toISOString().slice(0, 10);
+const today = localToday();
 
 const longDate = (value: string | null) =>
     value

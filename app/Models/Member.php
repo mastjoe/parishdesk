@@ -159,7 +159,6 @@ class Member extends Model implements HasMedia
         }
 
         $parents = $this->family->members()
-            ->with('media')
             ->whereIn('family_role', [FamilyRole::Father, FamilyRole::Mother])
             ->whereKeyNot($this->id)
             ->get()
