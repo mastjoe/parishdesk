@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -101,6 +102,17 @@ class SacramentRecord extends Model
     public function sponsors(): HasMany
     {
         return $this->hasMany(SacramentSponsor::class)->orderBy('id');
+    }
+
+    /**
+     * Get the marriage application the wedding was recorded from, for a
+     * Matrimony entry that went through the banns here.
+     *
+     * @return HasOne<MarriageApplication, $this>
+     */
+    public function marriageApplication(): HasOne
+    {
+        return $this->hasOne(MarriageApplication::class, 'matrimony_record_id');
     }
 
     /**

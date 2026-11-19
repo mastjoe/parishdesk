@@ -54,6 +54,7 @@ class SacramentPresenter
             'spouse' => $record->spouse !== null ? MemberPresenter::summary($record->spouse) : null,
             'confirmationName' => $record->detail('confirmation_name'),
             'orderLabel' => $order?->label(),
+            'hasCertificate' => $record->type->certificateTitle() !== null,
             'registerBook' => $record->register_book,
             'registerPage' => $record->register_page,
             'entryNo' => $record->entry_no,

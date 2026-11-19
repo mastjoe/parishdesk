@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
-import { BookOpen, CalendarDays, MapPin, Pencil, Trash2 } from '@lucide/vue';
+import {
+    BookOpen,
+    CalendarDays,
+    MapPin,
+    Pencil,
+    ScrollText,
+    Trash2,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
 import StatusBadge from '@/components/app/StatusBadge.vue';
@@ -11,7 +18,13 @@ import { formatPlainDate } from '@/lib/people';
 import { sacramentIcon, sacramentTile, sacramentTone } from '@/lib/sacraments';
 import { cn } from '@/lib/utils';
 import { show as memberShow } from '@/routes/admin/members';
-import { destroy, edit, index, show } from '@/routes/admin/sacraments';
+import {
+    certificate,
+    destroy,
+    edit,
+    index,
+    show,
+} from '@/routes/admin/sacraments';
 import type { MemberSummary, SacramentDetail } from '@/types';
 
 const props = defineProps<{
@@ -169,6 +182,20 @@ const remove = () => {
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
+                    <Button
+                        v-if="record.hasCertificate"
+                        variant="outline"
+                        size="sm"
+                        as-child
+                    >
+                        <a
+                            :href="certificate.url(record.id)"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <ScrollText class="size-4" /> Certificate
+                        </a>
+                    </Button>
                     <Button
                         v-if="can.update"
                         variant="outline"

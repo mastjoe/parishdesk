@@ -45,6 +45,7 @@ export type SacramentDetail = SacramentRow & {
     spouse: MemberSummary | null;
     confirmationName: string | null;
     orderLabel: string | null;
+    hasCertificate: boolean;
     registerBook: string | null;
     registerPage: string | null;
     entryNo: string | null;

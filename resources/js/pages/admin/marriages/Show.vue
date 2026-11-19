@@ -18,6 +18,7 @@ import {
     HeartHandshake,
     Megaphone,
     Pencil,
+    ScrollText,
     ShieldAlert,
     Trash2,
     Undo2,
@@ -73,7 +74,10 @@ import {
     update as objectionUpdate,
 } from '@/routes/admin/marriages/objections';
 import { show as memberShow } from '@/routes/admin/members';
-import { show as sacramentShow } from '@/routes/admin/sacraments';
+import {
+    certificate as sacramentCertificate,
+    show as sacramentShow,
+} from '@/routes/admin/sacraments';
 import type {
     BannsObjection,
     MarriageDetail,
@@ -493,6 +497,22 @@ const remove = () => {
                 <Link :href="sacramentShow(application.matrimonyRecordId)">
                     <BookMarked class="size-4" /> Register entry
                 </Link>
+            </Button>
+            <Button
+                v-if="application.matrimonyRecordId && can.viewSacraments"
+                size="sm"
+                variant="outline"
+                as-child
+            >
+                <a
+                    :href="
+                        sacramentCertificate.url(application.matrimonyRecordId)
+                    "
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <ScrollText class="size-4" /> Marriage certificate
+                </a>
             </Button>
         </div>
 

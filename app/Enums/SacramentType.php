@@ -51,6 +51,18 @@ enum SacramentType: string
     }
 
     /**
+     * Get the title of the certificate the parish issues from the register,
+     * or null when it issues none for this sacrament yet.
+     */
+    public function certificateTitle(): ?string
+    {
+        return match ($this) {
+            self::Matrimony => 'Certificate of Marriage',
+            default => null,
+        };
+    }
+
+    /**
      * Get the roles the sponsors of this sacrament can hold. Sacraments
      * without sponsors return an empty list.
      *

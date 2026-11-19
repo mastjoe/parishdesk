@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\People\MemberController;
 use App\Http\Controllers\Admin\People\MemberExportController;
 use App\Http\Controllers\Admin\People\MemberImportController;
 use App\Http\Controllers\Admin\People\MemberInvitationController;
+use App\Http\Controllers\Admin\Sacraments\SacramentCertificateController;
 use App\Http\Controllers\Admin\Sacraments\SacramentRecordController;
 use App\Http\Controllers\Admin\Settings\AppearanceController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
@@ -69,6 +70,7 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::resource('clergy', ClergyAssignmentController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::resource('sacraments', SacramentRecordController::class);
+        Route::get('sacraments/{sacrament}/certificate', [SacramentCertificateController::class, 'show'])->name('sacraments.certificate');
 
         Route::resource('marriages', MarriageApplicationController::class);
         Route::scopeBindings()->prefix('marriages/{marriage}')->name('marriages.')->group(function () {
